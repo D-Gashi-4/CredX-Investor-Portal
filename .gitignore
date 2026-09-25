@@ -10,6 +10,9 @@ Thumbs.db
 # Dependencies
 node_modules/
 
+# Local database
+apps/api/data/
+
 # Build output
 dist/
 build/

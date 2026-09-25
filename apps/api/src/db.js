@@ -1,0 +1,80 @@
+import 'dotenv/config';
+import { mkdirSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
+import { DatabaseSync } from 'node:sqlite';
+
+const databasePath = resolve(process.env.DATABASE_FILE || './apps/api/data/credx.db');
+mkdirSync(dirname(databasePath), { recursive: true });
+const db = new DatabaseSync(databasePath);
+
+db.exec(`
+  PRAGMA foreign_keys = ON;
+  CREATE TABLE IF NOT EXISTS users (
+    id INTEGER PRIMARY KEY,
+    email TEXT NOT NULL UNIQUE,
+    display_name TEXT NOT NULL,
+    role TEXT NOT NULL CHECK (role IN ('INVESTOR', 'ADMIN', 'STAFF'))
+  );
+  CREATE TABLE IF NOT EXISTS investors (
+    id INTEGER PRIMARY KEY,
+    user_id INTEGER NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+    reference TEXT NOT NULL UNIQUE,
+    classification TEXT NOT NULL
+  );
+  CREATE TABLE IF NOT EXISTS loans (
+    id TEXT PRIMARY KEY,
+    title TEXT NOT NULL,
+    property TEXT NOT NULL,
+    asset TEXT NOT NULL,
+    type TEXT NOT NULL,
+    principal REAL NOT NULL,
+    coupon REAL NOT NULL,
+    ltv REAL NOT NULL,
+    maturity TEXT NOT NULL,
+    status TEXT NOT NULL
+  );
+  CREATE TABLE IF NOT EXISTS allocations (
+    id INTEGER PRIMARY KEY,
+    investor_id INTEGER NOT NULL REFERENCES investors(id) ON DELETE CASCADE,
+    loan_id TEXT NOT NULL REFERENCES loans(id) ON DELETE CASCADE,
+    amount REAL NOT NULL,
+    rate REAL NOT NULL,
+    status TEXT NOT NULL,
+    UNIQUE (investor_id, loan_id)
+  );
+  CREATE TABLE IF NOT EXISTS documents (
+    id INTEGER PRIMARY KEY,
+    investor_id INTEGER NOT NULL REFERENCES investors(id) ON DELETE CASCADE,
+    category TEXT NOT NULL,
+    file_name TEXT NOT NULL,
+    status TEXT NOT NULL
+  );
+`);
+
+const seedUser = db.prepare(`INSERT OR IGNORE INTO users (id, email, display_name, role) VALUES (1, ?, ?, ?)`);
+seedUser.run('d.gashi@example.co.uk', 'Dorant Gashi', 'INVESTOR');
+const seedInvestor = db.prepare(`INSERT OR IGNORE INTO investors (id, user_id, reference, classification) VALUES (1, 1, ?, ?)`);
+seedInvestor.run('CX-INV-0421', 'Self-certified sophisticated investor');
+
+const facilities = [
+  ['CX-2604-K', 'Sevenoaks Mixed-Use Refinance', 'Sevenoaks, Kent', 'Mixed-use parade', 'Commercial', 250000, 11.4, 58, '2026-11-14'],
+  ['CX-2598-K', 'Tunbridge Wells Office Acquisition', 'Tunbridge Wells, Kent', 'Class E commercial office', 'Commercial', 175000, 11, 55, '2026-09-03'],
+  ['CX-2581-R', 'Whitstable Residential Auction', 'Whitstable, Kent', 'Detached residential dwelling', 'Residential', 95000, 10.5, 52, '2026-07-21'],
+  ['CX-2572-D', 'Maidstone Light Industrial', 'Maidstone, Kent', 'Light industrial unit', 'Commercial', 320000, 11.75, 61, '2027-01-08'],
+  ['CX-2540-K', 'Canterbury HMO Conversion', 'Canterbury, Kent', 'Six-bedroom HMO conversion', 'Residential', 140000, 10.95, 49, '2026-06-12'],
+  ['CX-2511-R', 'Folkestone Residential Refurb', 'Folkestone, Kent', 'Terraced residential dwelling', 'Residential', 60000, 10.25, 46, '2026-05-29']
+];
+const seedLoan = db.prepare(`INSERT OR IGNORE INTO loans (id, title, property, asset, type, principal, coupon, ltv, maturity, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'ACTIVE')`);
+const seedAllocation = db.prepare(`INSERT OR IGNORE INTO allocations (investor_id, loan_id, amount, rate, status) VALUES (1, ?, ?, ?, 'Active')`);
+for (const facility of facilities) {
+  seedLoan.run(...facility);
+  seedAllocation.run(facility[0], facility[5], facility[6]);
+}
+
+export function getDatabase() {
+  return db;
+}
+
+if (import.meta.url === `file://${process.argv[1]?.replaceAll('\\', '/')}`) {
+  console.log(`CredX SQLite database ready at ${databasePath}`);
+}

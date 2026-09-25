@@ -1,0 +1,10 @@
+{
+  "name": "credx-platform",
+  "private": true,
+  "workspaces": ["apps/api"],
+  "scripts": {
+    "api:dev": "npm.cmd --workspace @credx/api run dev",
+    "api:start": "npm.cmd --workspace @credx/api run start",
+    "db:seed": "npm.cmd --workspace @credx/api run db:seed"
+  }
+}
