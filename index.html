@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CredX Investor Portal</title>
+    <meta
+      name="description"
+      content="CredX Investor Portal dashboard for portfolio, deals, and capital movement oversight."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="brand-wrap">
+          <div class="brand-mark">C</div>
+          <div>
+            <p class="eyebrow">Investor portal</p>
+            <h1>CredX</h1>
+          </div>
+        </div>
+
+        <nav class="sidebar-nav" aria-label="Sidebar navigation">
+          <a class="nav-item active" href="#overview">
+            <span class="nav-icon">◫</span>
+            Overview
+          </a>
+          <a class="nav-item" href="#opportunities">
+            <span class="nav-icon">◎</span>
+            Opportunities
+          </a>
+          <a class="nav-item" href="#portfolio">
+            <span class="nav-icon">▣</span>
+            Portfolio
+          </a>
+          <a class="nav-item" href="#workflow">
+            <span class="nav-icon">◌</span>
+            Workflow
+          </a>
+        </nav>
+
+        <div class="sidebar-card">
+          <p>Capital available</p>
+          <h3>$8.4M</h3>
+          <span>Ready for deployment</span>
+        </div>
+      </aside>
+
+      <main class="content-area">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">Portfolio overview</p>
+            <h2>Capital command center</h2>
+          </div>
+
+          <div class="topbar-actions">
+            <button class="ghost-btn">Export</button>
+            <button class="primary-btn">New deal</button>
+          </div>
+        </header>
+
+        <section class="hero">
+          <div class="hero-copy">
+            <span class="status-pill">Portfolio health: Strong</span>
+            <h3>Invest with clarity across every credit opportunity.</h3>
+            <p>
+              Track allocations, evaluate deal quality, and monitor capital movements
+              in one high-confidence dashboard built for modern investors.
+            </p>
+
+            <div class="hero-actions">
+              <button class="primary-btn">View opportunities</button>
+              <button class="ghost-btn">See performance</button>
+            </div>
+
+            <ul class="trust-row" aria-label="Trust statistics">
+              <li><strong>12.4%</strong><span>Net yield</span></li>
+              <li><strong>$18.7M</strong><span>Active capital</span></li>
+              <li><strong>96.2%</strong><span>On-time funding</span></li>
+            </ul>
+          </div>
+
+          <aside class="hero-panel" aria-label="Summary card">
+            <div class="panel-header">
+              <span class="mini-label">Portfolio snapshot</span>
+              <span class="mini-badge positive">+8.6%</span>
+            </div>
+
+            <div class="value-row">
+              <div>
+                <p>Total value</p>
+                <h4>$24.8M</h4>
+              </div>
+              <div class="trend up">▲ 2.1% vs last month</div>
+            </div>
+
+            <div class="mini-chart" aria-hidden="true">
+              <span style="height: 28%"></span>
+              <span style="height: 44%"></span>
+              <span style="height: 38%"></span>
+              <span style="height: 52%"></span>
+              <span style="height: 70%"></span>
+              <span style="height: 80%"></span>
+              <span style="height: 95%"></span>
+            </div>
+
+            <div class="allocation-list">
+              <div><span>Private credit</span><strong>42%</strong></div>
+              <div><span>Real assets</span><strong>29%</strong></div>
+              <div><span>Growth equity</span><strong>18%</strong></div>
+              <div><span>Cash reserve</span><strong>11%</strong></div>
+            </div>
+          </aside>
+        </section>
+
+        <section id="overview" class="metrics-grid" aria-label="Key metrics">
+          <article class="metric-card accent">
+            <p>Monthly return</p>
+            <h3>1.32%</h3>
+            <span class="delta positive">+0.18% from last month</span>
+          </article>
+          <article class="metric-card">
+            <p>Liquidity coverage</p>
+            <h3>86%</h3>
+            <span class="delta neutral">Stable reserve</span>
+          </article>
+          <article class="metric-card">
+            <p>Deal pipeline</p>
+            <h3>7 live</h3>
+            <span class="delta positive">2 closing next 30 days</span>
+          </article>
+          <article class="metric-card">
+            <p>Risk score</p>
+            <h3>Low</h3>
+            <span class="delta neutral">Within target band</span>
+          </article>
+        </section>
+
+        <section class="dashboard-grid">
+          <div class="panel large-panel" id="opportunities">
+            <div class="section-head">
+              <div>
+                <p class="eyebrow">Featured deals</p>
+                <h3>Opportunity pipeline</h3>
+              </div>
+              <a href="#">View all</a>
+            </div>
+
+            <div class="deal-list">
+              <article class="deal-item">
+                <div class="deal-copy">
+                  <span class="tag tag-blue">Infrastructure</span>
+                  <h4>North Ridge Logistics</h4>
+                  <p>Senior secured note • 12 mo term</p>
+                </div>
+                <div class="deal-stats">
+                  <strong>11.8%</strong>
+                  <span>Target IRR</span>
+                </div>
+              </article>
+
+              <article class="deal-item">
+                <div class="deal-copy">
+                  <span class="tag tag-green">Climate</span>
+                  <h4>Green Harbor Energy</h4>
+                  <p>Revenue-backed financing • 18 mo term</p>
+                </div>
+                <div class="deal-stats">
+                  <strong>13.1%</strong>
+                  <span>Target IRR</span>
+                </div>
+              </article>
+
+              <article class="deal-item">
+                <div class="deal-copy">
+                  <span class="tag tag-gold">Real estate</span>
+                  <h4>Summit Living Fund</h4>
+                  <p>Preferred equity • 24 mo term</p>
+                </div>
+                <div class="deal-stats">
+                  <strong>10.6%</strong>
+                  <span>Target IRR</span>
+                </div>
+              </article>
+            </div>
+          </div>
+
+          <aside class="panel side-panel" id="workflow">
+            <div class="section-head simple-head">
+              <div>
+                <p class="eyebrow">Execution</p>
+                <h3>Portfolio flow</h3>
+              </div>
+            </div>
+
+            <div class="flow-list">
+              <div class="flow-item">
+                <span class="dot dot-blue"></span>
+                <div>
+                  <strong>Allocation review</strong>
+                  <small>Updated 4 hours ago</small>
+                </div>
+              </div>
+              <div class="flow-item">
+                <span class="dot dot-green"></span>
+                <div>
+                  <strong>Funding approved</strong>
+                  <small>2 transactions cleared</small>
+                </div>
+              </div>
+              <div class="flow-item">
+                <span class="dot dot-gold"></span>
+                <div>
+                  <strong>Risk monitoring</strong>
+                  <small>No alerts in the last 7 days</small>
+                </div>
+              </div>
+            </div>
+          </aside>
+        </section>
+
+        <section class="bottom-grid" id="portfolio">
+          <div class="panel">
+            <div class="section-head">
+              <div>
+                <p class="eyebrow">Holdings</p>
+                <h3>Allocation mix</h3>
+              </div>
+            </div>
+
+            <div class="allocation-bars" aria-label="Allocation bars">
+              <div>
+                <label>Private credit</label>
+                <div class="bar-wrap"><span style="width: 42%"></span></div>
+              </div>
+              <div>
+                <label>Real assets</label>
+                <div class="bar-wrap"><span style="width: 29%"></span></div>
+              </div>
+              <div>
+                <label>Growth equity</label>
+                <div class="bar-wrap"><span style="width: 18%"></span></div>
+              </div>
+              <div>
+                <label>Cash reserve</label>
+                <div class="bar-wrap"><span style="width: 11%"></span></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="section-head">
+              <div>
+                <p class="eyebrow">Recent activity</p>
+                <h3>Capital movement</h3>
+              </div>
+            </div>
+
+            <ul class="activity-list" id="activityList">
+              <li><span>Jun 15</span><strong>North Ridge Logistics</strong><em>+$1.2M</em></li>
+              <li><span>Jun 11</span><strong>Portfolio rebalancing</strong><em>-$420k</em></li>
+              <li><span>Jun 08</span><strong>Green Harbor Energy</strong><em>+$850k</em></li>
+              <li><span>Jun 04</span><strong>Distribution payout</strong><em>+$310k</em></li>
+            </ul>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>
