@@ -46,6 +46,8 @@ document.addEventListener('DOMContentLoaded', async function() {
 
   // Error sink persists across replaceWith since it's on window, not the DOM.
   window.addEventListener('error', function(e) {
+    // ResizeObserver delivery warnings are browser scheduling noise, not app failures.
+    if (e.message && /ResizeObserver loop (completed with undelivered notifications|limit exceeded)/i.test(e.message)) return;
     // Failed resource loads (CSP-blocked links, scripts, images) fire plain
     // events at the element — warn only; real JS errors carry message/error.
     if (!e.message && !e.error && e.target && e.target !== window) {
@@ -298,6 +300,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     const resourceScript = '<script>window.__resources = ' +
       JSON.stringify(resourceMap).replace(/<\//g, '<\\/') +
       ';</' + 'script>';
+    const layoutFix = '<style id="credx-modal-fix">html,body{overflow-x:hidden}.modal{max-height:calc(100vh - 32px)}.modal-body,.drawer-body{overscroll-behavior:contain;-webkit-overflow-scrolling:touch;scrollbar-gutter:stable}.modal-body pre{overscroll-behavior:contain}</style>';
     // Inject after <head> so the DOCTYPE stays first; prepending the script
     // would push the parser into quirks mode. DOMParser always emits a <head>
     // (synthesizing one if the source HTML omitted it) but may carry
@@ -306,7 +309,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     const headOpen = template.match(/<head[^>]*>/i);
     if (headOpen) {
       const i = headOpen.index + headOpen[0].length;
-      template = template.slice(0, i) + resourceScript + template.slice(i);
+      template = template.slice(0, i) + resourceScript + layoutFix + template.slice(i);
     }
 
     // Parse the template and swap the root element. Scripts inserted via

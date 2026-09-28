@@ -243,7 +243,7 @@ function TweaksPanel({ title = 'Tweaks', noDeckControls = false, children }) {
       window.addEventListener('resize', clampToViewport);
       return () => window.removeEventListener('resize', clampToViewport);
     }
-    const ro = new ResizeObserver(clampToViewport);
+    const ro = new ResizeObserver(() => requestAnimationFrame(clampToViewport));
     ro.observe(document.documentElement);
     return () => ro.disconnect();
   }, [open, clampToViewport]);

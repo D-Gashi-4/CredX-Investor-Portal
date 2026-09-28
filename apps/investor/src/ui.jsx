@@ -270,9 +270,14 @@ function Status({ kind }) {
 function Drawer({ open, onClose, title, eyebrow, children, actions }) {
   useEffect(() => {
     if (!open) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
     const onKey = (e) => { if (e.key === "Escape") onClose(); };
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", onKey);
+    };
   }, [open, onClose]);
   if (!open) return null;
   return (
@@ -298,9 +303,14 @@ function Drawer({ open, onClose, title, eyebrow, children, actions }) {
 function Modal({ open, onClose, title, children, footer, width }) {
   useEffect(() => {
     if (!open) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
     const onKey = (e) => { if (e.key === "Escape") onClose(); };
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", onKey);
+    };
   }, [open, onClose]);
   if (!open) return null;
   return (
