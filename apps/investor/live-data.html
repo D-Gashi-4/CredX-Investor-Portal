@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>CredX · Investor Portal</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,300..700&family=Manrope:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="src/styles.css">
+  <link rel="stylesheet" href="src/mobile.css">
+
+  <!-- CredX wordmark, embedded as base64 PNG data URLs. Loaded BEFORE
+       any component that renders the logo so the constants exist on
+       window when first paint runs. Keeps the bundler scanner happy:
+       there are no <img src="assets/..."> refs left in the codebase. -->
+  <!-- CredX wordmark as vector paths, loaded BEFORE any component that
+       renders the logo so the constants exist on window at first paint. -->
+  <script src="src/credx-logo-svg.js"></script>
+
+  <!-- Shared data bridge with the employee backend (CredX Platform.html).
+       Plain script, loaded before the app so window.CredXBridge exists. -->
+  <script src="src/credx-guide-doc.js"></script>
+  <script src="src/credx-bridge.js"></script>
+
+  <!-- Official Investor Statement generator — shared with the employee
+       backend. Plain script; exposes window.buildInvestorStatementHTML,
+       openInvestorStatement, downloadStatementData. -->
+  <script src="src/credx-statement-doc.js"></script>
+
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+  <template id="__bundler_thumbnail" data-bg-color="#117a82">
+    <svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
+      <rect width="1200" height="800" fill="#117a82"/>
+      <text x="600" y="440" text-anchor="middle"
+            font-family="Georgia, 'Source Serif 4', serif"
+            font-size="280" font-weight="700" fill="#f4f1ea"
+            letter-spacing="-8">CredX</text>
+      <text x="600" y="540" text-anchor="middle"
+            font-family="Manrope, system-ui, sans-serif"
+            font-size="44" font-weight="500" fill="#f4f1ea"
+            letter-spacing="12" opacity="0.7">INVESTOR PORTAL</text>
+    </svg>
+  </template>
+
+  <div id="root"></div>
+
+  <script type="text/babel" src="src/tweaks-panel.jsx"></script>
+  <script type="text/babel" src="src/data.jsx"></script>
+  <script type="text/babel" src="src/ui.jsx"></script>
+  <script type="text/babel" src="src/illustrations.jsx"></script>
+  <script type="text/babel" src="src/avatars.jsx"></script>
+  <script type="text/babel" src="src/nda.jsx"></script>
+  <script type="text/babel" src="src/views-overview.jsx"></script>
+  <script type="text/babel" src="src/views-portfolio.jsx"></script>
+  <script type="text/babel" src="src/views-deal-detail.jsx"></script>
+  <script type="text/babel" src="src/views-opportunities.jsx"></script>
+  <script type="text/babel" src="src/views-other.jsx"></script>
+  <script type="text/babel" src="src/views-account.jsx"></script>
+  <script type="text/babel" src="src/statement-builder.jsx"></script>
+  <script type="text/babel" src="src/apt-guide.jsx"></script>
+  <script type="text/babel" src="src/apt.jsx"></script>
+  <script type="text/babel" src="src/auth.jsx"></script>
+  <script type="text/babel" src="src/app.jsx"></script>
+</body>
+</html>

@@ -1,0 +1,8 @@
+{
+  "name": "@credx/investor-portal",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node server.js"
+  }
+}
