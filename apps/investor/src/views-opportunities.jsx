@@ -144,14 +144,6 @@ function OpportunitiesView({ openOpp }) {
               {l} <span style={{ marginLeft: 6, color: "var(--ink-3)" }} className="mono">{n}</span>
             </button>
           ))}
-          <button
-            className="chip"
-            aria-pressed={interestOnly}
-            onClick={() => setInterestOnly(value => !value)}
-            style={{ color: interestOnly ? "var(--accent-ink)" : "var(--ink-2)", background: interestOnly ? "var(--accent-tint)" : "transparent" }}
-          >
-            Your interest <span className="mono" style={{ marginLeft: 6, color: "var(--ink-3)" }}>{registeredInterest.length}</span>
-          </button>
         </div>
         <div style={{ marginLeft: "auto", display: "flex", alignItems: "center" }}>
           <button
@@ -174,6 +166,19 @@ function OpportunitiesView({ openOpp }) {
                 fontFamily: "var(--ff-mono)",
               }}>{activeFilters}</span>
             )}
+          </button>
+          <button
+            className="chip"
+            aria-pressed={interestOnly}
+            onClick={() => setInterestOnly(value => !value)}
+            style={{
+              padding: "8px 14px",
+              borderLeft: "1px solid var(--border)",
+              color: interestOnly ? "var(--accent-ink)" : "var(--ink-2)",
+              background: interestOnly ? "var(--accent-tint)" : "transparent",
+            }}
+          >
+            Your interest <span className="mono" style={{ marginLeft: 6, color: "var(--ink-3)" }}>{registeredInterest.length}</span>
           </button>
           <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "0 14px", borderLeft: "1px solid var(--border)" }}>
             <span className="eyebrow" style={{ fontSize: 10 }}>Sort</span>
