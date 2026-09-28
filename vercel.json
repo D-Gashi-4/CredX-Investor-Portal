@@ -1,6 +1,9 @@
 {
   "version": 2,
-  "outputDirectory": "apps/investor",
   "cleanUrls": true,
-  "trailingSlash": false
+  "trailingSlash": false,
+  "rewrites": [
+    { "source": "/", "destination": "/apps/investor/index.html" },
+    { "source": "/(.*)", "destination": "/apps/investor/$1" }
+  ]
 }
