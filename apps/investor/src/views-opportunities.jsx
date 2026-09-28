@@ -144,6 +144,14 @@ function OpportunitiesView({ openOpp }) {
               {l} <span style={{ marginLeft: 6, color: "var(--ink-3)" }} className="mono">{n}</span>
             </button>
           ))}
+          <button
+            className="chip"
+            aria-pressed={interestOnly}
+            onClick={() => setInterestOnly(value => !value)}
+            style={{ color: interestOnly ? "var(--accent-ink)" : "var(--ink-2)", background: interestOnly ? "var(--accent-tint)" : "transparent" }}
+          >
+            Your interest <span className="mono" style={{ marginLeft: 6, color: "var(--ink-3)" }}>{registeredInterest.length}</span>
+          </button>
         </div>
         <div style={{ marginLeft: "auto", display: "flex", alignItems: "center" }}>
           <button
@@ -177,14 +185,6 @@ function OpportunitiesView({ openOpp }) {
               <option value="ltv">Lowest LTV</option>
             </select>
           </div>
-          <button
-            className="chip"
-            aria-pressed={interestOnly}
-            onClick={() => setInterestOnly(value => !value)}
-            style={{ marginLeft: 8, color: interestOnly ? "var(--accent-ink)" : "var(--ink-2)", background: interestOnly ? "var(--accent-tint)" : "transparent" }}
-          >
-            Your interest <span className="mono" style={{ marginLeft: 6, color: "var(--ink-3)" }}>{registeredInterest.length}</span>
-          </button>
         </div>
       </div>
 
