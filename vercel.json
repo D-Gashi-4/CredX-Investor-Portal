@@ -1,0 +1,6 @@
+{
+  "version": 2,
+  "outputDirectory": "apps/investor",
+  "cleanUrls": true,
+  "trailingSlash": false
+}
