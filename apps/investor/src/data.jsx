@@ -676,7 +676,7 @@ const OPPORTUNITIES = [
 ];
 
 // Updates feed
-const UPDATES = [
+const UPDATES = (window.CREDX_UPDATES_SEED || [
   {
     id: "u-026",
     date: "20 May 2026",
@@ -735,7 +735,7 @@ const UPDATES = [
     body: "Works are signed off and Together Money has issued the formal remortgage offer. Redemption is scheduled for 29 May with funds returning to your client account same day.",
     attachments: [],
   },
-];
+]);
 
 const DOCUMENTS = [
   { id: "d1", name: "Q1 2026 Investor Statement.pdf", category: "Statements", deal: null, date: "30 Apr 2026", size: "612 KB" },
