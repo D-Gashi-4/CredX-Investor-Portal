@@ -8,7 +8,7 @@ const mime = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css
 const port = Number(process.env.PORT || 5173);
 
 createServer(async (req, res) => {
-  const requested = req.url === '/' ? '/index.html' : req.url;
+  const requested = req.url === '/' ? '/live-data.html' : req.url;
   const filePath = normalize(join(root, requested));
   if (!filePath.startsWith(root)) {
     res.writeHead(403); res.end('Forbidden'); return;

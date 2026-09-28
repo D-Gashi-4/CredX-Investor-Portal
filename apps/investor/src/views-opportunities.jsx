@@ -1,5 +1,28 @@
 // views-opportunities.jsx - deal flow + commit flow
 
+const REGISTERED_INTEREST_KEY = "credx-registered-interest-v1:";
+const MIN_INTEREST_AMOUNT = 25000;
+
+function registeredInterestKey() {
+  return REGISTERED_INTEREST_KEY + (INVESTOR?.accountId || "investor");
+}
+
+function loadRegisteredInterest() {
+  try {
+    const value = JSON.parse(localStorage.getItem(registeredInterestKey()) || "[]");
+    return Array.isArray(value) ? value.filter(item => Number(item.amount) >= MIN_INTEREST_AMOUNT) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveRegisteredInterest(entry) {
+  const current = loadRegisteredInterest();
+  const next = [entry, ...current.filter(item => item.opportunityId !== entry.opportunityId)];
+  localStorage.setItem(registeredInterestKey(), JSON.stringify(next));
+  window.dispatchEvent(new Event("credx-registered-interest"));
+}
+
 // A deal counts as "just posted" for 7 days after the backend published
 // it - drives the top-of-list float and the "Just posted" badge.
 function isJustPosted(o) {
@@ -34,6 +57,20 @@ function OpportunitiesView({ openOpp }) {
   const [categoriesSet, setCategoriesSet] = React.useState(
     new Set(["Residential bridging", "Commercial bridging", "Business loan"])
   );
+  const [interestOnly, setInterestOnly] = React.useState(false);
+  const [interestVersion, setInterestVersion] = React.useState(0);
+  const registeredInterest = React.useMemo(() => loadRegisteredInterest(), [interestVersion]);
+  const registeredIds = React.useMemo(() => new Set(registeredInterest.map(item => item.opportunityId)), [registeredInterest]);
+
+  React.useEffect(() => {
+    const onInterestChange = () => setInterestVersion(value => value + 1);
+    window.addEventListener("credx-registered-interest", onInterestChange);
+    window.addEventListener("storage", onInterestChange);
+    return () => {
+      window.removeEventListener("credx-registered-interest", onInterestChange);
+      window.removeEventListener("storage", onInterestChange);
+    };
+  }, []);
 
   // active filter count for the button badge
   const activeFilters =
@@ -42,7 +79,8 @@ function OpportunitiesView({ openOpp }) {
     (rateRange[0]   > bounds.rate[0]   || rateRange[1]   < bounds.rate[1]   ? 1 : 0) +
     (termRange[0]   > bounds.term[0]   || termRange[1]   < bounds.term[1]   ? 1 : 0) +
     (chargeTypes.size < 2 ? 1 : 0) +
-    (categoriesSet.size < 3 ? 1 : 0);
+    (categoriesSet.size < 3 ? 1 : 0) +
+    (interestOnly ? 1 : 0);
 
   const clearAll = () => {
     setAmountRange(bounds.amount);
@@ -51,6 +89,7 @@ function OpportunitiesView({ openOpp }) {
     setTermRange(bounds.term);
     setChargeTypes(new Set(["First", "Second"]));
     setCategoriesSet(new Set(["Residential bridging", "Commercial bridging", "Business loan"]));
+    setInterestOnly(false);
   };
 
   const list = OPPORTUNITIES
@@ -62,6 +101,7 @@ function OpportunitiesView({ openOpp }) {
       if (o.term < termRange[0]         || o.term > termRange[1])        return false;
       if (!chargeTypes.has(o.chargeType))      return false;
       if (!categoriesSet.has(o.category))      return false;
+      if (interestOnly && !registeredIds.has(o.id)) return false;
       return true;
     })
     .sort((a, b) => {
@@ -137,6 +177,14 @@ function OpportunitiesView({ openOpp }) {
               <option value="ltv">Lowest LTV</option>
             </select>
           </div>
+          <button
+            className="chip"
+            aria-pressed={interestOnly}
+            onClick={() => setInterestOnly(value => !value)}
+            style={{ marginLeft: 8, color: interestOnly ? "var(--accent-ink)" : "var(--ink-2)", background: interestOnly ? "var(--accent-tint)" : "transparent" }}
+          >
+            Your interest <span className="mono" style={{ marginLeft: 6, color: "var(--ink-3)" }}>{registeredInterest.length}</span>
+          </button>
         </div>
       </div>
 
@@ -173,7 +221,9 @@ function OpportunitiesView({ openOpp }) {
 
       {/* grid */}
       <div className="opp-grid" style={{ marginTop: 14 }}>
-        {list.map(o => (
+        {list.map(o => {
+          const interest = registeredInterest.find(item => item.opportunityId === o.id);
+          return (
           <article key={o.id} className="opp" onClick={() => openOpp(o)}>
             <div className="opp-hero">
               <PropIllustration dealId={o.id} type={o.type} category={o.category} />
@@ -189,6 +239,7 @@ function OpportunitiesView({ openOpp }) {
             <div className="opp-body">
               <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                 <span className="mono" style={{ fontSize: 11, color: "var(--ink-3)" }}>{o.id}</span>
+                {interest && <span className="badge" style={{ background: "var(--pos-tint)", color: "var(--pos)" }}>Interest registered · {fmtGBP(interest.amount, { compact: true })}</span>}
                 <span style={{ width: 3, height: 3, background: "var(--ink-4)", borderRadius: "50%" }} />
                 <span style={{ fontSize: 11, color: "var(--ink-3)" }}>{o.term}-month term</span>
                 <span style={{ width: 3, height: 3, background: "var(--ink-4)", borderRadius: "50%" }} />
@@ -224,7 +275,8 @@ function OpportunitiesView({ openOpp }) {
               </div>
             </div>
           </article>
-        ))}
+          );
+        })}
         {list.length === 0 && (
           <div style={{
             gridColumn: "1 / -1",
@@ -325,6 +377,7 @@ function FiltersPanel({
 function OpportunityDetail({ opp, open, onClose }) {
   const [commitOpen, setCommitOpen] = React.useState(false);
   if (!opp) return null;
+  const registered = loadRegisteredInterest().find(item => item.opportunityId === opp.id);
   // NDA gating removed - all content unlocked by default.
   const unlocked = true;
   const lockLevel = "";
@@ -342,6 +395,11 @@ function OpportunityDetail({ opp, open, onClose }) {
               </button>
         }
       >
+        {registered && (
+          <div style={{ marginTop: 16, padding: "12px 16px", background: "var(--pos-tint)", color: "var(--pos)", borderLeft: "3px solid var(--pos)", fontSize: 12.5 }}>
+            <strong>Interest registered:</strong> {fmtGBP(registered.amount)} · {registered.status}
+          </div>
+        )}
         {opp.lifecycle === "live" && (
           <div style={{
             marginTop: 16, padding: "12px 16px", display: "flex", gap: 12, alignItems: "flex-start",
@@ -704,7 +762,7 @@ function OpportunityDetail({ opp, open, onClose }) {
 // ─────────────────────────────────────────────────────────────────
 function RegisterInterest({ opp, open, onClose, onDone }) {
   const [step, setStep] = React.useState(0);
-  const [amount, setAmount] = React.useState(opp ? opp.min : 25000);
+  const [amount, setAmount] = React.useState(opp ? Math.max(opp.min, MIN_INTEREST_AMOUNT) : MIN_INTEREST_AMOUNT);
   const [phone, setPhone] = React.useState("");
   const [callback, setCallback] = React.useState("either");
   const [notes, setNotes] = React.useState("");
@@ -713,7 +771,7 @@ function RegisterInterest({ opp, open, onClose, onDone }) {
   React.useEffect(() => {
     if (open) {
       setStep(0);
-      setAmount(opp ? opp.min : 25000);
+      setAmount(opp ? Math.max(opp.min, MIN_INTEREST_AMOUNT) : MIN_INTEREST_AMOUNT);
       setPhone("");
       setCallback("either");
       setNotes("");
@@ -725,7 +783,8 @@ function RegisterInterest({ opp, open, onClose, onDone }) {
 
   const monthlyInterest = (amount * opp.rate / 100) / 12;
   const totalReturn = monthlyInterest * opp.term;
-  const valid = amount >= opp.min;
+  const minimum = Math.max(opp.min, MIN_INTEREST_AMOUNT);
+  const valid = amount >= minimum;
 
   // Build mailto with a clean, formatted body
   const subject = `Investment interest - ${opp.id} (${opp.title})`;
@@ -759,6 +818,13 @@ function RegisterInterest({ opp, open, onClose, onDone }) {
   const mailto = `mailto:${COMPANY.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 
   const handleSend = () => {
+    saveRegisteredInterest({
+      opportunityId: opp.id,
+      title: opp.title,
+      amount,
+      status: "Pending CredX response",
+      registeredAt: new Date().toISOString(),
+    });
     // Trigger user's mail client. Confirmation state shown either way -
     // CredX also receives the email from any subsequent send.
     window.location.href = mailto;
@@ -820,16 +886,16 @@ function RegisterInterest({ opp, open, onClose, onDone }) {
           <div className="field">
             <label>Amount you'd like to fund (£)</label>
             <input
-              type="number" min={opp.min} step={1000}
+              type="number" min={minimum} step={1000}
               value={amount}
               onChange={e => setAmount(parseInt(e.target.value) || 0)}
             />
             <div className="help">
-              Minimum {fmtGBP(opp.min)} · Facility size {fmtGBP(opp.facility)} · Indicative only - final terms agreed individually for each deployment.
+              Minimum {fmtGBP(minimum)} · Facility size {fmtGBP(opp.facility)} · Indicative only - final terms agreed individually for each deployment.
             </div>
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8 }}>
-            {[25000, 50000, 100000, 250000].filter(v => v >= opp.min && v <= opp.facility).map(v => (
+            {[25000, 50000, 100000, 250000].filter(v => v >= minimum && v <= opp.facility).map(v => (
               <button key={v} type="button" className="btn btn-sm"
                 onClick={() => setAmount(v)}
                 style={amount === v ? { borderColor: "var(--accent)", color: "var(--accent-ink)" } : undefined}>
