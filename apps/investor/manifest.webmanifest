@@ -1,0 +1,18 @@
+{
+  "name": "CredX Investor Portal",
+  "short_name": "CredX",
+  "description": "CredX investor portfolio and opportunities portal",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f7f5f0",
+  "theme_color": "#117a82",
+  "icons": [
+    {
+      "src": "/credx-monogram.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
