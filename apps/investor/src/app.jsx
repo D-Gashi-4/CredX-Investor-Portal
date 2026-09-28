@@ -22,6 +22,17 @@ const VIEWS = [
   { id: "account",        label: "Account" },
 ];
 
+const ACTIVE_VIEW_KEY = "credx-active-view-v1";
+
+function readActiveView() {
+  try {
+    const saved = localStorage.getItem(ACTIVE_VIEW_KEY);
+    return VIEWS.some(view => view.id === saved) ? saved : "overview";
+  } catch {
+    return "overview";
+  }
+}
+
 // Read the saved profile avatar so the nav can react to changes made in
 // TabProfile without prop drilling. TabProfile dispatches a `credx-profile`
 // event on save; this hook re-reads then.
@@ -53,7 +64,12 @@ function App() {
   const { session, signIn, signOut } = useAuth();
   const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
   const investorAvatar = useProfileAvatar();
-  const [view, setView] = React.useState("overview");
+  const [view, setViewState] = React.useState(readActiveView);
+  const setView = (nextView) => {
+    if (!VIEWS.some(item => item.id === nextView)) return;
+    setViewState(nextView);
+    try { localStorage.setItem(ACTIVE_VIEW_KEY, nextView); } catch {}
+  };
   const [accountTab, setAccountTab] = React.useState("profile");
   const [dealDetail, setDealDetail] = React.useState(null);
   const [oppDetail, setOppDetail] = React.useState(null);
