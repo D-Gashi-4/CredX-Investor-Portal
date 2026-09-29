@@ -70,6 +70,11 @@ function App() {
     setViewState(nextView);
     try { localStorage.setItem(ACTIVE_VIEW_KEY, nextView); } catch {}
   };
+  React.useEffect(() => {
+    if (session) return;
+    setViewState("overview");
+    try { localStorage.removeItem(ACTIVE_VIEW_KEY); } catch {}
+  }, [session]);
   const [accountTab, setAccountTab] = React.useState("profile");
   const [dealDetail, setDealDetail] = React.useState(null);
   const [oppDetail, setOppDetail] = React.useState(null);
