@@ -1543,9 +1543,49 @@ function buildPortalStatementModel(opts = {}) {
   };
 }
 
+function hydrateInvestorPortfolio(payload) {
+  const allocations = Array.isArray(payload?.allocations) ? payload.allocations : [];
+  const formatDate = (value) => {
+    if (!value) return "-";
+    return new Intl.DateTimeFormat("en-GB", { day: "2-digit", month: "short", year: "numeric" }).format(new Date(value));
+  };
+  const hydrated = allocations.map((allocation) => ({
+    id: allocation.loan_id,
+    title: allocation.title,
+    property: `${allocation.property} · ${allocation.asset}`,
+    type: allocation.type,
+    position: Number(allocation.amount) || 0,
+    rate: Number(allocation.rate) || Number(allocation.coupon) || 0,
+    term: 0,
+    drawn: "-",
+    maturity: formatDate(allocation.maturity),
+    progress: 0,
+    status: allocation.loan_status === "ACTIVE" ? "live" : "pending",
+    ltv: Number(allocation.ltv) || 0,
+    interestAccrued: 0,
+    nextEvent: null,
+    security: "CredX facility security",
+    borrower: "Available from CredX",
+    purpose: "Investor allocation held in the CredX portfolio.",
+    facilityRef: allocation.loan_id,
+  }));
+  LIVE_DEALS.splice(0, LIVE_DEALS.length, ...hydrated);
+  const capital = hydrated.reduce((sum, deal) => sum + deal.position, 0);
+  KPIS.capitalDeployed = capital;
+  KPIS.weightedLtv = capital ? hydrated.reduce((sum, deal) => sum + deal.ltv * deal.position, 0) / capital : 0;
+}
+
+function hydrateInvestorIdentity(user) {
+  if (!user) return;
+  if (user.displayName) INVESTOR.name = user.displayName;
+  if (user.email) INVESTOR.email = user.email;
+  if (user.reference) INVESTOR.accountId = user.reference;
+  if (user.classification) INVESTOR.classification = user.classification;
+}
+
 Object.assign(window, {
   INVESTOR, COMPANY, LIVE_DEALS, COMPLETED_DEALS, OPPORTUNITIES, UPDATES, DOCUMENTS, DISTRIBUTIONS, PERF_SERIES, CUMULATIVE_INTEREST, GEO_EXPOSURE, KPIS,
-  fmtGBP, fmtPct, compactGBPValue, downloadCSV, exportPositions, exportStatement, exportDealStatement,
+  fmtGBP, fmtPct, compactGBPValue, downloadCSV, exportPositions, exportStatement, exportDealStatement, hydrateInvestorPortfolio, hydrateInvestorIdentity,
   buildPortalStatementModel,
 });
 

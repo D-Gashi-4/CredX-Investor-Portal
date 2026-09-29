@@ -83,6 +83,32 @@ function App() {
   const [searchOpen, setSearchOpen] = React.useState(false);
   const [statementOpen, setStatementOpen] = React.useState(false);
   const [menuOpen, setMenuOpen]   = React.useState(false);   // mobile hamburger
+  const [, setPortfolioVersion] = React.useState(0);
+
+  React.useEffect(() => {
+    if (!session?.token) return undefined;
+    let cancelled = false;
+    fetch(`${window.CREDX_API_URL || "http://localhost:4000"}/api/portfolio`, {
+      headers: { Authorization: `Bearer ${session.token}` },
+    })
+      .then(response => {
+        if (!response.ok) throw new Error(`Portfolio API returned ${response.status}`);
+        return response.json();
+      })
+      .then(portfolio => {
+        if (cancelled) return;
+        window.hydrateInvestorIdentity && window.hydrateInvestorIdentity({
+          displayName: session.displayName,
+          email: session.email,
+          reference: session.reference,
+          classification: session.classification,
+        });
+        window.hydrateInvestorPortfolio && window.hydrateInvestorPortfolio(portfolio);
+        setPortfolioVersion(version => version + 1);
+      })
+      .catch(error => console.error("Unable to load investor portfolio", error));
+    return () => { cancelled = true; };
+  }, [session?.token]);
 
   // Live bridge sync — re-merge posted deals / updates from the employee
   // backend whenever the shared store changes, then force a re-render so
