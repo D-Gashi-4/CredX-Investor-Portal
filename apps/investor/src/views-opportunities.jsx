@@ -767,7 +767,7 @@ function OpportunityDetail({ opp, open, onClose }) {
 // ─────────────────────────────────────────────────────────────────
 function RegisterInterest({ opp, open, onClose, onDone }) {
   const [step, setStep] = React.useState(0);
-  const [amount, setAmount] = React.useState(opp ? Math.max(opp.min, MIN_INTEREST_AMOUNT) : MIN_INTEREST_AMOUNT);
+  const [amountInput, setAmountInput] = React.useState(opp ? String(Math.max(opp.min, MIN_INTEREST_AMOUNT)) : String(MIN_INTEREST_AMOUNT));
   const [phone, setPhone] = React.useState("");
   const [callback, setCallback] = React.useState("either");
   const [notes, setNotes] = React.useState("");
@@ -776,7 +776,7 @@ function RegisterInterest({ opp, open, onClose, onDone }) {
   React.useEffect(() => {
     if (open) {
       setStep(0);
-      setAmount(opp ? Math.max(opp.min, MIN_INTEREST_AMOUNT) : MIN_INTEREST_AMOUNT);
+      setAmountInput(String(opp ? Math.max(opp.min, MIN_INTEREST_AMOUNT) : MIN_INTEREST_AMOUNT));
       setPhone("");
       setCallback("either");
       setNotes("");
@@ -786,6 +786,7 @@ function RegisterInterest({ opp, open, onClose, onDone }) {
 
   if (!opp) return null;
 
+  const amount = Number(amountInput) || 0;
   const monthlyInterest = (amount * opp.rate / 100) / 12;
   const totalReturn = monthlyInterest * opp.term;
   const minimum = Math.max(opp.min, MIN_INTEREST_AMOUNT);
@@ -892,8 +893,8 @@ function RegisterInterest({ opp, open, onClose, onDone }) {
             <label>Amount you'd like to fund (£)</label>
             <input
               type="number" min={minimum} step={1000}
-              value={amount}
-              onChange={e => setAmount(parseInt(e.target.value) || 0)}
+              value={amountInput}
+              onChange={e => setAmountInput(e.target.value.replace(/\D/g, ""))}
             />
             <div className="help">
               Minimum {fmtGBP(minimum)} · Facility size {fmtGBP(opp.facility)} · Indicative only - final terms agreed individually for each deployment.
@@ -902,7 +903,7 @@ function RegisterInterest({ opp, open, onClose, onDone }) {
           <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8 }}>
             {[25000, 50000, 100000, 250000].filter(v => v >= minimum && v <= opp.facility).map(v => (
               <button key={v} type="button" className="btn btn-sm"
-                onClick={() => setAmount(v)}
+                onClick={() => setAmountInput(String(v))}
                 style={amount === v ? { borderColor: "var(--accent)", color: "var(--accent-ink)" } : undefined}>
                 {fmtGBP(v, { compact: true })}
               </button>
