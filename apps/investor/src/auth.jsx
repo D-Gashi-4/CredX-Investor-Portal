@@ -488,6 +488,10 @@ function SignInFlow({ onSignIn, switchToSignup }) {
     try {
       const response = await fetchApi("/health");
       if (!response.ok) throw new Error(`The CredX API returned ${response.status}.`);
+      const health = await response.json();
+      if (health.authenticationEnabled === false) {
+        throw new Error("The API is online, but production investor sign-in is disabled until registration, email verification, MFA and KYC are implemented.");
+      }
       setStep("twofa");
     } catch (error) {
       setErr(authErrorMessage(error));

@@ -11,6 +11,7 @@
     "cors": "latest",
     "dotenv": "latest",
     "express": "latest",
-    "express-rate-limit": "^8.7.0"
+    "express-rate-limit": "^8.7.0",
+    "pg": "^8.23.0"
   }
 }

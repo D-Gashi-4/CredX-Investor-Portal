@@ -3,7 +3,10 @@ import { mkdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { DatabaseSync } from 'node:sqlite';
-import { randomBytes, scryptSync, timingSafeEqual } from 'node:crypto';
+import { randomBytes } from 'node:crypto';
+import { hashPassword, verifyPassword } from './passwords.js';
+
+export { hashPassword, verifyPassword };
 
 const apiRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const databasePath = resolve(process.env.DATABASE_FILE || resolve(apiRoot, 'data/credx.db'));
@@ -74,19 +77,6 @@ db.exec(`
 const userColumns = db.prepare(`PRAGMA table_info(users)`).all();
 if (!userColumns.some(column => column.name === 'password_hash')) {
   db.exec(`ALTER TABLE users ADD COLUMN password_hash TEXT`);
-}
-
-export function hashPassword(password) {
-  const salt = randomBytes(16).toString('hex');
-  const digest = scryptSync(password, salt, 64).toString('hex');
-  return `${salt}:${digest}`;
-}
-
-export function verifyPassword(password, stored) {
-  if (!stored || !stored.includes(':')) return false;
-  const [salt, expected] = stored.split(':');
-  const actual = scryptSync(password, salt, 64).toString('hex');
-  return expected.length === actual.length && timingSafeEqual(Buffer.from(actual), Buffer.from(expected));
 }
 
 export function createSession(userId) {

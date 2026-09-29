@@ -27,8 +27,8 @@ Open the investor portal at `http://localhost:5173` and the admin portal at `htt
 
 ## Security status
 
-This is not ready for real investor accounts or personal information. Registration, email verification, server-verified MFA, password recovery, and KYC are not connected. The signup flow is a preview and does not create an account. The API intentionally refuses to start with `NODE_ENV=production` until those controls are implemented. Do not use real investor credentials or data.
+This is not ready for real investor accounts or personal information. Registration, email verification, server-verified MFA, password recovery, and KYC are not connected. The signup flow is a preview and does not create an account. Production API health can run against Postgres, but production investor sign-in returns `503` until those controls are implemented. Do not use real investor credentials or data.
 
 ## Vercel deployment status
 
-The current Vercel configuration serves static investor files only; it does not deploy the API. A live login requires a separately deployed API and persistent production database. After deployment, set `window.CREDX_API_URL` in `apps/investor/src/runtime-config.js` to the API's HTTPS base URL, then redeploy the investor portal. The app intentionally does not guess an API URL from the Vercel frontend hostname.
+The current Vercel configuration serves static investor files only; it does not deploy the API. `railway.json` configures the API service. Create a Railway Postgres service and set `DATABASE_URL`, `NODE_ENV=production`, and `CORS_ORIGIN` (the exact Vercel frontend origin) on the API service. After deploying the API, set `window.CREDX_API_URL` in `apps/investor/src/runtime-config.js` to its HTTPS base URL, then redeploy the investor portal. The app intentionally does not guess an API URL from the Vercel frontend hostname. Production sign-in remains disabled until the security controls above are implemented.
