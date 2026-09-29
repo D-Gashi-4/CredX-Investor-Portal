@@ -10,6 +10,8 @@
 // straight into the portal as a demo convenience.
 
 const AUTH_KEY = "credx-auth-session-v2";
+const LAST_ACTIVITY_KEY = "credx-last-activity-v1";
+const IDLE_TIMEOUT_MS = 20 * 60 * 1000;
 const SIGNUP_KEY = "credx-signup-drafts";
 const DEMO_PASSWORD = "CredX2026!";
 
@@ -252,17 +254,45 @@ function isHighRisk(code)    { return HIGH_RISK_COUNTRIES.includes(code); }
 function useAuth() {
   const [session, setSession] = React.useState(() => {
     try {
-      const s = localStorage.getItem(AUTH_KEY);
+      const s = sessionStorage.getItem(AUTH_KEY);
       return s ? JSON.parse(s) : null;
     } catch { return null; }
   });
+  React.useEffect(() => {
+    if (!session) return undefined;
+    let lastActivity = Date.now();
+    try {
+      lastActivity = Number(sessionStorage.getItem(LAST_ACTIVITY_KEY)) || lastActivity;
+    } catch {}
+
+    const touch = () => {
+      lastActivity = Date.now();
+      try { sessionStorage.setItem(LAST_ACTIVITY_KEY, String(lastActivity)); } catch {}
+    };
+    const checkIdle = () => {
+      if (Date.now() - lastActivity >= IDLE_TIMEOUT_MS) signOut();
+    };
+    const events = ["pointerdown", "keydown", "scroll", "touchstart"];
+    events.forEach(event => window.addEventListener(event, touch, { passive: true }));
+    const timer = window.setInterval(checkIdle, 30000);
+    return () => {
+      events.forEach(event => window.removeEventListener(event, touch));
+      window.clearInterval(timer);
+    };
+  }, [session]);
   const signIn = (email) => {
     const next = { email, signedInAt: new Date().toISOString() };
-    try { localStorage.setItem(AUTH_KEY, JSON.stringify(next)); } catch {}
+    try {
+      sessionStorage.setItem(AUTH_KEY, JSON.stringify(next));
+      sessionStorage.setItem(LAST_ACTIVITY_KEY, String(Date.now()));
+    } catch {}
     setSession(next);
   };
   const signOut = () => {
-    try { localStorage.removeItem(AUTH_KEY); } catch {}
+    try {
+      sessionStorage.removeItem(AUTH_KEY);
+      sessionStorage.removeItem(LAST_ACTIVITY_KEY);
+    } catch {}
     setSession(null);
   };
   return { session, signIn, signOut };
