@@ -129,6 +129,11 @@ for (const facility of facilities) {
   seedAllocation.run(facility[0], facility[5], facility[6]);
 }
 
+const seedDocument = db.prepare(`INSERT OR IGNORE INTO documents (id, investor_id, category, file_name, status) VALUES (?, 1, ?, ?, 'Verified')`);
+seedDocument.run(1, 'Statements', 'Q1 2026 Investor Statement.pdf');
+seedDocument.run(2, 'Reports', 'May 2026 Investor Letter.pdf');
+seedDocument.run(3, 'KYC', 'Sophisticated Investor Self-Certification.pdf');
+
 export function getDatabase() {
   return db;
 }

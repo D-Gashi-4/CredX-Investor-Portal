@@ -1570,6 +1570,17 @@ function hydrateInvestorPortfolio(payload) {
     facilityRef: allocation.loan_id,
   }));
   LIVE_DEALS.splice(0, LIVE_DEALS.length, ...hydrated);
+  if (Array.isArray(payload?.documents)) {
+    DOCUMENTS.splice(0, DOCUMENTS.length, ...payload.documents.map(document => ({
+      id: String(document.id),
+      name: document.file_name,
+      category: document.category,
+      deal: null,
+      date: "Available in account",
+      size: "-",
+      status: document.status,
+    })));
+  }
   const capital = hydrated.reduce((sum, deal) => sum + deal.position, 0);
   KPIS.capitalDeployed = capital;
   KPIS.weightedLtv = capital ? hydrated.reduce((sum, deal) => sum + deal.ltv * deal.position, 0) / capital : 0;
