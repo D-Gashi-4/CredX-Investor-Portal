@@ -16,7 +16,23 @@ function loadRegisteredInterest() {
   }
 }
 
-function saveRegisteredInterest(entry) {
+function getSessionToken() {
+  try { return JSON.parse(sessionStorage.getItem("credx-auth-session-v2") || "{}").token || ""; } catch { return ""; }
+}
+
+async function saveRegisteredInterest(entry) {
+  const token = getSessionToken();
+  try {
+    const response = await fetch(`${window.CREDX_API_URL || "http://localhost:4000"}/api/interests`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify(entry),
+    });
+    if (!response.ok) throw new Error(`Interest API returned ${response.status}`);
+    entry = await response.json();
+  } catch (error) {
+    console.error("Unable to persist registered interest", error);
+  }
   const current = loadRegisteredInterest();
   const next = [entry, ...current.filter(item => item.opportunityId !== entry.opportunityId)];
   localStorage.setItem(registeredInterestKey(), JSON.stringify(next));
@@ -58,14 +74,24 @@ function OpportunitiesView({ openOpp }) {
     new Set(["Residential bridging", "Commercial bridging", "Business loan"])
   );
   const [interestOnly, setInterestOnly] = React.useState(false);
-  const [interestVersion, setInterestVersion] = React.useState(0);
-  const registeredInterest = React.useMemo(() => loadRegisteredInterest(), [interestVersion]);
+  const [registeredInterest, setRegisteredInterest] = React.useState(loadRegisteredInterest);
   const registeredIds = React.useMemo(() => new Set(registeredInterest.map(item => item.opportunityId)), [registeredInterest]);
 
   React.useEffect(() => {
-    const onInterestChange = () => setInterestVersion(value => value + 1);
+    const onInterestChange = () => setRegisteredInterest(loadRegisteredInterest());
     window.addEventListener("credx-registered-interest", onInterestChange);
     window.addEventListener("storage", onInterestChange);
+    const token = getSessionToken();
+    if (token) {
+      fetch(`${window.CREDX_API_URL || "http://localhost:4000"}/api/interests`, { headers: { Authorization: `Bearer ${token}` } })
+        .then(response => response.ok ? response.json() : [])
+        .then(records => {
+          if (!Array.isArray(records)) return;
+          localStorage.setItem(registeredInterestKey(), JSON.stringify(records));
+          setRegisteredInterest(records);
+        })
+        .catch(error => console.error("Unable to load registered interest", error));
+    }
     return () => {
       window.removeEventListener("credx-registered-interest", onInterestChange);
       window.removeEventListener("storage", onInterestChange);
@@ -823,8 +849,8 @@ function RegisterInterest({ opp, open, onClose, onDone }) {
 
   const mailto = `mailto:${COMPANY.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 
-  const handleSend = () => {
-    saveRegisteredInterest({
+  const handleSend = async () => {
+    await saveRegisteredInterest({
       opportunityId: opp.id,
       title: opp.title,
       amount,
