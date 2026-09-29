@@ -3,6 +3,24 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>CredX · Fund Management</title>
+  <style>html.credx-admin-auth-pending body{visibility:hidden}</style>
+  <script src="/runtime-config.js"></script>
+  <script src="/admin-auth.js"></script>
+  <script>
+    document.documentElement.classList.add('credx-admin-auth-pending');
+    Promise.resolve()
+      .then(() => window.CredXAdminAuth.verifySession())
+      .then(authorized => {
+        if (authorized) {
+          document.documentElement.classList.remove('credx-admin-auth-pending');
+          return;
+        }
+        const login = new URL('/login.html', window.location.origin);
+        login.searchParams.set('reason', 'session');
+        window.location.replace(login.href);
+      })
+      .catch(() => window.location.replace('/login.html?reason=session'));
+  </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
   <style>/* cyrillic-ext */
@@ -821,6 +839,8 @@
     .user-chip { display: flex; align-items: center; gap: 8px; padding: 4px 10px 4px 4px;
                  border: 1px solid var(--line); border-radius: 999px; background: var(--surface); }
     .user-info { line-height: 1.15; }
+    .admin-signout { padding: 5px 8px; border: 0; border-left: 1px solid var(--line); background: transparent;
+             color: var(--teal-600); font: inherit; font-size: 11px; cursor: pointer; }
 
     /* ---------- View header ---------- */
     .view { display: flex; flex-direction: column; gap: 20px; }
@@ -7639,6 +7659,7 @@ function Topbar({ route, data, theme, toggleTheme, onMenu, openLoan, openInvesto
             <div className="strong small">N. Kaur</div>
             <div className="muted small">Director</div>
           </div>
+          <button className="admin-signout" type="button" onClick={() => window.CredXAdminAuth.signOut()}>Sign out</button>
         </div>
       </div>
     </div>

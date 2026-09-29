@@ -4,7 +4,7 @@
   "redirects": [
     {
       "source": "/",
-      "destination": "/design/standalone.html",
+      "destination": "/login.html",
       "permanent": false
     }
   ]

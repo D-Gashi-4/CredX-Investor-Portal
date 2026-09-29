@@ -10,7 +10,7 @@ const port = Number(process.env.PORT || 5174);
 createServer(async (req, res) => {
   const requestPath = new URL(req.url, 'http://localhost').pathname;
   if (requestPath === '/') {
-    res.writeHead(302, { Location: '/design/standalone.html' });
+    res.writeHead(302, { Location: '/login.html' });
     res.end();
     return;
   }
