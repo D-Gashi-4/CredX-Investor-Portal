@@ -4,9 +4,23 @@
 const AUTH_KEY = "credx-auth-session-v2";
 const LAST_ACTIVITY_KEY = "credx-last-activity-v1";
 const IDLE_TIMEOUT_MS = 20 * 60 * 1000;
+const API_REQUEST_TIMEOUT_MS = 5000;
 const API_BASE_URL = () => window.CREDX_API_URL || `${window.location.protocol}//${window.location.hostname}:4000`;
 
+async function fetchApi(path, options = {}) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), API_REQUEST_TIMEOUT_MS);
+  try {
+    return await fetch(`${API_BASE_URL()}${path}`, { ...options, signal: controller.signal });
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 function authErrorMessage(error) {
+  if (error?.name === "AbortError") {
+    return `The CredX API at ${API_BASE_URL()} did not respond within 5 seconds. Check that it is running, then retry.`;
+  }
   if (error instanceof TypeError && /fetch/i.test(error.message)) {
     return `Cannot reach the CredX API at ${API_BASE_URL()}. Start the API with node apps/api/src/server.js, then retry.`;
   }
@@ -279,7 +293,7 @@ function useAuth() {
     };
   }, [session]);
   const signIn = async (email, password) => {
-    const response = await fetch(`${API_BASE_URL()}/api/auth/login`, {
+    const response = await fetchApi("/api/auth/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),
@@ -457,7 +471,7 @@ function SignInFlow({ onSignIn, switchToSignup }) {
     if (!password)                                   { setErr("Password is required."); return; }
     setBusy(true);
     try {
-      const response = await fetch(`${API_BASE_URL()}/health`);
+      const response = await fetchApi("/health");
       if (!response.ok) throw new Error(`The CredX API returned ${response.status}.`);
       setStep("twofa");
     } catch (error) {
