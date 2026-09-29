@@ -5,24 +5,38 @@ const AUTH_KEY = "credx-auth-session-v2";
 const LAST_ACTIVITY_KEY = "credx-last-activity-v1";
 const IDLE_TIMEOUT_MS = 20 * 60 * 1000;
 const API_REQUEST_TIMEOUT_MS = 5000;
-const API_BASE_URL = () => window.CREDX_API_URL || `${window.location.protocol}//${window.location.hostname}:4000`;
+const API_BASE_URL = () => {
+  const configuredUrl = window.CREDX_API_URL?.trim();
+  if (configuredUrl) return configuredUrl.replace(/\/+$/, "");
+  if (["localhost", "127.0.0.1"].includes(window.location.hostname)) {
+    return `${window.location.protocol}//${window.location.hostname}:4000`;
+  }
+  return null;
+};
 
 async function fetchApi(path, options = {}) {
+  const apiBaseUrl = API_BASE_URL();
+  if (!apiBaseUrl) {
+    throw new Error("This deployed investor portal has no API configured. Deploy the CredX API and set window.CREDX_API_URL to its HTTPS base URL.");
+  }
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), API_REQUEST_TIMEOUT_MS);
   try {
-    return await fetch(`${API_BASE_URL()}${path}`, { ...options, signal: controller.signal });
+    return await fetch(`${apiBaseUrl}${path}`, { ...options, signal: controller.signal });
   } finally {
     clearTimeout(timeout);
   }
 }
 
 function authErrorMessage(error) {
+  const apiBaseUrl = API_BASE_URL();
   if (error?.name === "AbortError") {
-    return `The CredX API at ${API_BASE_URL()} did not respond within 5 seconds. Check that it is running, then retry.`;
+    return `The CredX API at ${apiBaseUrl || "the configured API URL"} did not respond within 5 seconds. Check that it is running, then retry.`;
   }
   if (error instanceof TypeError && /fetch/i.test(error.message)) {
-    return `Cannot reach the CredX API at ${API_BASE_URL()}. Start the API with node apps/api/src/server.js, then retry.`;
+    return apiBaseUrl
+      ? `Cannot reach the CredX API at ${apiBaseUrl}. Start the API with node apps/api/src/server.js, then retry.`
+      : "This deployed investor portal has no API configured. Deploy the CredX API and set window.CREDX_API_URL to its HTTPS base URL.";
   }
   return error.message || "Unable to sign in.";
 }
@@ -311,8 +325,9 @@ function useAuth() {
     setSession(next);
   };
   const signOut = () => {
-    if (session?.token) {
-      fetch(`${API_BASE_URL()}/api/auth/logout`, {
+    const apiBaseUrl = API_BASE_URL();
+    if (session?.token && apiBaseUrl) {
+      fetch(`${apiBaseUrl}/api/auth/logout`, {
         method: "POST",
         headers: { Authorization: `Bearer ${session.token}` },
       }).catch(() => {});
