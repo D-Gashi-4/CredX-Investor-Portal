@@ -1,15 +1,10 @@
 import 'dotenv/config';
 import { mkdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { DatabaseSync } from 'node:sqlite';
-import { randomBytes } from 'node:crypto';
-import { hashPassword, verifyPassword } from './passwords.js';
+import { randomBytes, scryptSync, timingSafeEqual } from 'node:crypto';
 
-export { hashPassword, verifyPassword };
-
-const apiRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const databasePath = resolve(process.env.DATABASE_FILE || resolve(apiRoot, 'data/credx.db'));
+const databasePath = resolve(process.env.DATABASE_FILE || './apps/api/data/credx.db');
 mkdirSync(dirname(databasePath), { recursive: true });
 const db = new DatabaseSync(databasePath);
 
@@ -79,6 +74,19 @@ if (!userColumns.some(column => column.name === 'password_hash')) {
   db.exec(`ALTER TABLE users ADD COLUMN password_hash TEXT`);
 }
 
+export function hashPassword(password) {
+  const salt = randomBytes(16).toString('hex');
+  const digest = scryptSync(password, salt, 64).toString('hex');
+  return `${salt}:${digest}`;
+}
+
+export function verifyPassword(password, stored) {
+  if (!stored || !stored.includes(':')) return false;
+  const [salt, expected] = stored.split(':');
+  const actual = scryptSync(password, salt, 64).toString('hex');
+  return expected.length === actual.length && timingSafeEqual(Buffer.from(actual), Buffer.from(expected));
+}
+
 export function createSession(userId) {
   const token = randomBytes(32).toString('base64url');
   const now = new Date();
@@ -100,36 +108,34 @@ export function deleteSession(token) {
   db.prepare(`DELETE FROM sessions WHERE token = ?`).run(token);
 }
 
-if (process.env.NODE_ENV !== 'production') {
-  const seedUser = db.prepare(`INSERT OR IGNORE INTO users (id, email, display_name, role) VALUES (1, ?, ?, ?)`);
-  seedUser.run('d.gashi@example.co.uk', 'Dorant Gashi', 'INVESTOR');
-  db.prepare(`UPDATE users SET password_hash = COALESCE(password_hash, ?) WHERE id = 1`).run(hashPassword('CredX2026!'));
-  const seedAdmin = db.prepare(`INSERT OR IGNORE INTO users (id, email, display_name, role) VALUES (2, ?, ?, ?)`);
-  seedAdmin.run('admin@credx.co.uk', 'CredX Admin', 'ADMIN');
-  db.prepare(`UPDATE users SET password_hash = COALESCE(password_hash, ?) WHERE id = 2`).run(hashPassword('CredXAdmin2026!'));
-  const seedInvestor = db.prepare(`INSERT OR IGNORE INTO investors (id, user_id, reference, classification) VALUES (1, 1, ?, ?)`);
-  seedInvestor.run('CX-INV-0421', 'Self-certified sophisticated investor');
+const seedUser = db.prepare(`INSERT OR IGNORE INTO users (id, email, display_name, role) VALUES (1, ?, ?, ?)`);
+seedUser.run('d.gashi@example.co.uk', 'Dorant Gashi', 'INVESTOR');
+db.prepare(`UPDATE users SET password_hash = COALESCE(password_hash, ?) WHERE id = 1`).run(hashPassword('CredX2026!'));
+const seedAdmin = db.prepare(`INSERT OR IGNORE INTO users (id, email, display_name, role) VALUES (2, ?, ?, ?)`);
+seedAdmin.run('admin@credx.co.uk', 'CredX Admin', 'ADMIN');
+db.prepare(`UPDATE users SET password_hash = COALESCE(password_hash, ?) WHERE id = 2`).run(hashPassword('CredXAdmin2026!'));
+const seedInvestor = db.prepare(`INSERT OR IGNORE INTO investors (id, user_id, reference, classification) VALUES (1, 1, ?, ?)`);
+seedInvestor.run('CX-INV-0421', 'Self-certified sophisticated investor');
 
-  const facilities = [
-    ['CX-2604-K', 'Sevenoaks Mixed-Use Refinance', 'Sevenoaks, Kent', 'Mixed-use parade', 'Commercial', 250000, 11.4, 58, '2026-11-14'],
-    ['CX-2598-K', 'Tunbridge Wells Office Acquisition', 'Tunbridge Wells, Kent', 'Class E commercial office', 'Commercial', 175000, 11, 55, '2026-09-03'],
-    ['CX-2581-R', 'Whitstable Residential Auction', 'Whitstable, Kent', 'Detached residential dwelling', 'Residential', 95000, 10.5, 52, '2026-07-21'],
-    ['CX-2572-D', 'Maidstone Light Industrial', 'Maidstone, Kent', 'Light industrial unit', 'Commercial', 320000, 11.75, 61, '2027-01-08'],
-    ['CX-2540-K', 'Canterbury HMO Conversion', 'Canterbury, Kent', 'Six-bedroom HMO conversion', 'Residential', 140000, 10.95, 49, '2026-06-12'],
-    ['CX-2511-R', 'Folkestone Residential Refurb', 'Folkestone, Kent', 'Terraced residential dwelling', 'Residential', 60000, 10.25, 46, '2026-05-29']
-  ];
-  const seedLoan = db.prepare(`INSERT OR IGNORE INTO loans (id, title, property, asset, type, principal, coupon, ltv, maturity, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'ACTIVE')`);
-  const seedAllocation = db.prepare(`INSERT OR IGNORE INTO allocations (investor_id, loan_id, amount, rate, status) VALUES (1, ?, ?, ?, 'Active')`);
-  for (const facility of facilities) {
-    seedLoan.run(...facility);
-    seedAllocation.run(facility[0], facility[5], facility[6]);
-  }
-
-  const seedDocument = db.prepare(`INSERT OR IGNORE INTO documents (id, investor_id, category, file_name, status) VALUES (?, 1, ?, ?, 'Verified')`);
-  seedDocument.run(1, 'Statements', 'Q1 2026 Investor Statement.pdf');
-  seedDocument.run(2, 'Reports', 'May 2026 Investor Letter.pdf');
-  seedDocument.run(3, 'KYC', 'Sophisticated Investor Self-Certification.pdf');
+const facilities = [
+  ['CX-2604-K', 'Sevenoaks Mixed-Use Refinance', 'Sevenoaks, Kent', 'Mixed-use parade', 'Commercial', 250000, 11.4, 58, '2026-11-14'],
+  ['CX-2598-K', 'Tunbridge Wells Office Acquisition', 'Tunbridge Wells, Kent', 'Class E commercial office', 'Commercial', 175000, 11, 55, '2026-09-03'],
+  ['CX-2581-R', 'Whitstable Residential Auction', 'Whitstable, Kent', 'Detached residential dwelling', 'Residential', 95000, 10.5, 52, '2026-07-21'],
+  ['CX-2572-D', 'Maidstone Light Industrial', 'Maidstone, Kent', 'Light industrial unit', 'Commercial', 320000, 11.75, 61, '2027-01-08'],
+  ['CX-2540-K', 'Canterbury HMO Conversion', 'Canterbury, Kent', 'Six-bedroom HMO conversion', 'Residential', 140000, 10.95, 49, '2026-06-12'],
+  ['CX-2511-R', 'Folkestone Residential Refurb', 'Folkestone, Kent', 'Terraced residential dwelling', 'Residential', 60000, 10.25, 46, '2026-05-29']
+];
+const seedLoan = db.prepare(`INSERT OR IGNORE INTO loans (id, title, property, asset, type, principal, coupon, ltv, maturity, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'ACTIVE')`);
+const seedAllocation = db.prepare(`INSERT OR IGNORE INTO allocations (investor_id, loan_id, amount, rate, status) VALUES (1, ?, ?, ?, 'Active')`);
+for (const facility of facilities) {
+  seedLoan.run(...facility);
+  seedAllocation.run(facility[0], facility[5], facility[6]);
 }
+
+const seedDocument = db.prepare(`INSERT OR IGNORE INTO documents (id, investor_id, category, file_name, status) VALUES (?, 1, ?, ?, 'Verified')`);
+seedDocument.run(1, 'Statements', 'Q1 2026 Investor Statement.pdf');
+seedDocument.run(2, 'Reports', 'May 2026 Investor Letter.pdf');
+seedDocument.run(3, 'KYC', 'Sophisticated Investor Self-Certification.pdf');
 
 export function getDatabase() {
   return db;

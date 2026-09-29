@@ -1,9 +1,6 @@
 {
   "name": "credx-platform",
   "private": true,
-  "engines": {
-    "node": ">=22.5"
-  },
   "workspaces": ["apps/api", "apps/investor", "apps/admin"],
   "scripts": {
     "api:dev": "npm.cmd --workspace @credx/api run dev",

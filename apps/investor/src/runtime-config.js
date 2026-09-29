@@ -1,1 +1,0 @@
-window.CREDX_API_URL = "";
