@@ -4,7 +4,7 @@
 const AUTH_KEY = "credx-auth-session-v2";
 const LAST_ACTIVITY_KEY = "credx-last-activity-v1";
 const IDLE_TIMEOUT_MS = 20 * 60 * 1000;
-const API_BASE_URL = () => window.CREDX_API_URL || "http://localhost:4000";
+const API_BASE_URL = () => window.CREDX_API_URL || `${window.location.protocol}//${window.location.hostname}:4000`;
 
 function authErrorMessage(error) {
   if (error instanceof TypeError && /fetch/i.test(error.message)) {
