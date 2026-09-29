@@ -57,6 +57,16 @@ db.exec(`
     expires_at TEXT NOT NULL,
     created_at TEXT NOT NULL
   );
+  CREATE TABLE IF NOT EXISTS registered_interests (
+    id INTEGER PRIMARY KEY,
+    investor_id INTEGER NOT NULL REFERENCES investors(id) ON DELETE CASCADE,
+    opportunity_id TEXT NOT NULL,
+    title TEXT NOT NULL,
+    amount REAL NOT NULL CHECK (amount >= 25000),
+    status TEXT NOT NULL,
+    registered_at TEXT NOT NULL,
+    UNIQUE (investor_id, opportunity_id)
+  );
 `);
 
 const userColumns = db.prepare(`PRAGMA table_info(users)`).all();

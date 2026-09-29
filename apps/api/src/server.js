@@ -56,6 +56,22 @@ app.get('/api/portfolio', requireAuth, requireRole('INVESTOR'), (req, res) => {
   res.json({ ...investor, allocations, documents });
 });
 
+app.get('/api/interests', requireAuth, requireRole('INVESTOR'), (req, res) => {
+  res.json(db.prepare(`SELECT opportunity_id AS opportunityId, title, amount, status, registered_at AS registeredAt FROM registered_interests WHERE investor_id = ? ORDER BY registered_at DESC`).all(req.user.investor_id));
+});
+
+app.post('/api/interests', requireAuth, requireRole('INVESTOR'), (req, res) => {
+  const opportunityId = String(req.body?.opportunityId || '').trim();
+  const title = String(req.body?.title || '').trim();
+  const amount = Number(req.body?.amount);
+  if (!opportunityId || !title || !Number.isFinite(amount) || amount < 25000) {
+    return res.status(400).json({ error: 'Minimum registered interest is £25,000' });
+  }
+  const registeredAt = new Date().toISOString();
+  db.prepare(`INSERT INTO registered_interests (investor_id, opportunity_id, title, amount, status, registered_at) VALUES (?, ?, ?, ?, 'Pending CredX response', ?) ON CONFLICT(investor_id, opportunity_id) DO UPDATE SET title = excluded.title, amount = excluded.amount, status = excluded.status, registered_at = excluded.registered_at`).run(req.user.investor_id, opportunityId, title, amount, registeredAt);
+  res.status(201).json({ opportunityId, title, amount, status: 'Pending CredX response', registeredAt });
+});
+
 app.get('/api/admin/loans', requireAuth, requireRole('ADMIN', 'STAFF'), (_req, res) => {
   res.json(db.prepare(`SELECT loans.*, COUNT(allocations.id) AS allocation_count FROM loans LEFT JOIN allocations ON allocations.loan_id = loans.id GROUP BY loans.id ORDER BY loans.maturity`).all());
 });
