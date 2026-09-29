@@ -1,19 +1,9 @@
-// auth.jsx - sign-in + sign-up flows gating the portal.
-//
-// Two modes share the dark brand panel on the left; the right pane
-// hosts either the 2-step Sign-In (creds → 2FA) or the 5-step
-// Sign-Up (details → investor profile → KYC → risk → submitted).
-//
-// Demo password is fixed at "CredX2026!". Sign-up isn't a real
-// registration - it just stages a draft application that CredX
-// would normally pick up by email, but on Submit we drop the user
-// straight into the portal as a demo convenience.
+// auth.jsx - prototype sign-in and investor onboarding flows.
+// Registration, MFA, email delivery and KYC are not connected to services.
 
 const AUTH_KEY = "credx-auth-session-v2";
 const LAST_ACTIVITY_KEY = "credx-last-activity-v1";
 const IDLE_TIMEOUT_MS = 20 * 60 * 1000;
-const SIGNUP_KEY = "credx-signup-drafts";
-const DEMO_PASSWORD = "CredX2026!";
 
 // ────────────────────────────────────────────────────────────────
 // Country list + sanctions config
@@ -280,7 +270,7 @@ function useAuth() {
       window.clearInterval(timer);
     };
   }, [session]);
-  const signIn = async (email, password = DEMO_PASSWORD) => {
+  const signIn = async (email, password) => {
     const response = await fetch(`${window.CREDX_API_URL || "http://localhost:4000"}/api/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -361,7 +351,7 @@ function AuthScreen({ onSignIn }) {
 
           {mode === "signin"
             ? <SignInFlow onSignIn={onSignIn} switchToSignup={() => setMode("signup")} />
-            : <SignUpFlow onSignIn={onSignIn} switchToSignin={() => setMode("signin")} onWide={setWide} />
+            : <SignUpFlow switchToSignin={() => setMode("signin")} onWide={setWide} />
           }
         </div>
       </div>
@@ -415,10 +405,8 @@ function AuthBrandPanel() {
       <div>
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           {[
-            ["End-to-end encryption",   "All connections to the portal use TLS 1.3. Session data is encrypted at rest."],
-            ["Identity verified by GoIdentity", "KYC and AML completed at onboarding via our verification partner GoIdentity."],
-            ["Two-factor authentication", "Required on every sign-in for every account."],
-            ["UK ICO registered",       "Personal data handled in line with UK GDPR - ICO reg. " + (window.COMPANY ? COMPANY.ico : "ZB991146") + "."],
+            ["Development preview", "Investor registration, email verification, MFA and KYC are not connected."],
+            ["Demo data only", "Do not enter real personal, identity or investment information."],
           ].map(([t, d]) => (
             <div key={t} style={{ display: "grid", gridTemplateColumns: "20px 1fr", gap: 12, alignItems: "flex-start" }}>
               <span style={{ color: "rgba(244,241,234,.55)", marginTop: 2 }}><I.check /></span>
@@ -451,7 +439,6 @@ function SignInFlow({ onSignIn, switchToSignup }) {
   const [email, setEmail] = React.useState("d.gashi@example.co.uk");
   const [password, setPassword] = React.useState("");
   const [code, setCode] = React.useState("");
-  const [remember, setRemember] = React.useState(true);
   const [err, setErr] = React.useState("");
   const [busy, setBusy] = React.useState(false);
 
@@ -511,15 +498,11 @@ function SignInFlow({ onSignIn, switchToSignup }) {
           <div className="field">
             <label htmlFor="auth-pw" style={{ display: "flex", justifyContent: "space-between" }}>
               <span>Password</span>
-              <a href="#" onClick={e => e.preventDefault()} style={{ color: "var(--accent)", letterSpacing: 0, textTransform: "none", fontWeight: 500, fontSize: 11 }}>Forgot password?</a>
+              <span style={{ color: "var(--ink-3)", letterSpacing: 0, textTransform: "none", fontWeight: 400, fontSize: 11 }}>Password reset unavailable</span>
             </label>
             <input id="auth-pw" type="password" autoComplete="current-password"
                    value={password} onChange={e => setPassword(e.target.value)} />
           </div>
-          <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12.5, color: "var(--ink-2)", marginTop: 2 }}>
-            <input type="checkbox" checked={remember} onChange={e => setRemember(e.target.checked)} style={{ width: 14, height: 14 }} />
-            Trust this device for 30 days
-          </label>
           {err && <ErrorBanner message={err} />}
           <button type="submit" className="btn btn-primary btn-lg" disabled={busy}
                   style={{ marginTop: 8, justifyContent: "center", opacity: busy ? 0.6 : 1 }}>
@@ -564,8 +547,8 @@ function SignInFlow({ onSignIn, switchToSignup }) {
           marginBottom: 14,
           fontSize: 11.5, color: "var(--accent-ink)",
         }}>
-          <strong>Demo access · </strong>
-          Sign in with any registered email + password <span className="mono" style={{ background: "rgba(0,0,0,.08)", padding: "1px 6px", fontWeight: 600 }}>CredX2026!</span> Any 6-digit code works for 2FA.
+          <strong>Prototype only · </strong>
+          The verification code is not checked by the API. Account creation and MFA are not active; do not use real credentials.
         </div>
         <div style={{ marginBottom: 6 }}>
           <strong style={{ color: "var(--ink-2)" }}>New to CredX?</strong>{" "}
@@ -597,20 +580,20 @@ function SignInFlow({ onSignIn, switchToSignup }) {
 
 const SIGNUP_STEPS = [
   { id: "details",   short: "Your details",       title: "Create your investor account",
-    sub: "We'll use these details to set up your portal access. Identity verification follows separately via GoIdentity." },
+    sub: "This local preview does not create an account or send your details to CredX." },
   { id: "profile",   short: "Investor profile",   title: "Tell us about your investment goals",
     sub: "These details help us match you to facilities that fit your strategy. Nothing is binding." },
   { id: "kyc",       short: "Identity & KYC",     title: "Identity & source of funds",
-    sub: "Provide the basics now - GoIdentity will email you a secure link to upload your photo ID and proof of address." },
+    sub: "Identity checks are not connected. Do not enter real identity or financial information." },
   { id: "risk",      short: "Appropriateness",    title: "Appropriateness assessment",
     sub: "An FCA-style appropriateness test in two short sections, followed by the risk acknowledgements. It takes most people five minutes." },
   { id: "twofa",     short: "2FA setup",          title: "Set up two-factor authentication",
     sub: "Required for every CredX account - protects your deal information from unauthorised access." },
-  { id: "submitted", short: "Submitted",          title: "Application submitted",
-    sub: "Your investor account has been created. The CredX team will be in touch within 24-48 hours." },
+  { id: "submitted", short: "Preview complete",    title: "Onboarding preview complete",
+    sub: "No application was sent and no investor account was created. This prototype is not connected to registration or KYC services." },
 ];
 
-function SignUpFlow({ onSignIn, switchToSignin, onWide }) {
+function SignUpFlow({ switchToSignin, onWide }) {
   const [stepIdx, setStepIdx] = React.useState(0);
   const [err, setErr] = React.useState("");
   const [busy, setBusy] = React.useState(false);
@@ -696,7 +679,7 @@ function SignUpFlow({ onSignIn, switchToSignin, onWide }) {
       }
     }
     if (step.id === "risk") {
-      if (form.aptLocked)          return "You've used all three attempts at the knowledge check. We'll email you a link to retake it after 24 hours.";
+      if (form.aptLocked)          return "You've used all three attempts in this preview. No retake email will be sent.";
       if (!form.aptPassed)         return "Complete section 1 - answer all three knowledge questions correctly to continue.";
       if (!form.aptSuitSubmitted)  return "Answer and submit all seven questions in section 2.";
       if (!(form.ack1 && form.ack2 && form.ack3 && form.ack4)) return "Tick all four acknowledgements to proceed.";
@@ -706,7 +689,7 @@ function SignUpFlow({ onSignIn, switchToSignin, onWide }) {
         return "Enter the mobile number to receive SMS codes.";
       }
       if (!/^\d{6}$/.test(form.twoFACode)) {
-        return "Enter the 6-digit verification code to confirm 2FA is working.";
+        return "Enter six digits to continue the preview. The code is not verified.";
       }
     }
     return "";
@@ -720,18 +703,6 @@ function SignUpFlow({ onSignIn, switchToSignin, onWide }) {
     setBusy(true);
     setTimeout(() => {
       setBusy(false);
-      // On the last interactive step (twofa) save draft and move to submitted
-      if (step.id === "twofa") {
-        try {
-          const drafts = JSON.parse(localStorage.getItem(SIGNUP_KEY) || "[]");
-          drafts.push({
-            submittedAt: new Date().toISOString(),
-            ...form,
-            password: undefined, confirm: undefined, twoFACode: undefined,
-          });
-          localStorage.setItem(SIGNUP_KEY, JSON.stringify(drafts.slice(-10)));
-        } catch {}
-      }
       setStepIdx(i => Math.min(SIGNUP_STEPS.length - 1, i + 1));
     }, step.id === "twofa" ? 700 : 300);
   };
@@ -754,7 +725,7 @@ function SignUpFlow({ onSignIn, switchToSignin, onWide }) {
         {step.id === "kyc"       && <StepKyc       form={form} set={set} />}
         {step.id === "risk"      && <AppropriatenessTest form={form} set={set} />}
         {step.id === "twofa"     && <StepTwoFA     form={form} set={set} />}
-        {step.id === "submitted" && <StepSubmitted form={form} onSignIn={onSignIn} />}
+        {step.id === "submitted" && <StepSubmitted switchToSignin={switchToSignin} />}
 
         {err && <ErrorBanner message={err} />}
 
@@ -875,7 +846,7 @@ function StepDetails({ form, set }) {
         <label>Email</label>
         <input type="email" value={form.email} onChange={e => set({ email: e.target.value })}
                placeholder="you@example.co.uk" />
-        <div className="help">Used for portal sign-in, deal alerts and the GoIdentity invitation.</div>
+        <div className="help">This preview does not send email or identity-verification invitations.</div>
       </div>
       <div className="field">
         <label>Phone</label>
@@ -1373,9 +1344,9 @@ function StepKyc({ form, set }) {
         fontSize: 12.5, color: "var(--accent-ink)", lineHeight: 1.55,
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, fontWeight: 600, marginBottom: 4 }}>
-          <I.lock /> Verified by GoIdentity
+          <I.lock /> Identity verification preview
         </div>
-        After you submit, GoIdentity will send a secure link by SMS to <strong className="mono">{fullPhone(form.phoneCountry, form.phoneNumber) || "your mobile number"}</strong>. On your phone, you'll scan your passport or driving licence and take a brief liveness selfie - typically under three minutes. CredX's Chief Risk Officer reviews each verification.
+        GoIdentity is not connected. This preview does not transmit identity documents, send SMS messages or request a compliance review.
       </div>
 
       {/* Country first - drives everything else on this step */}
@@ -1383,7 +1354,7 @@ function StepKyc({ form, set }) {
         <label>Country of residence</label>
         <CountrySelect value={form.country} onChange={(code) => set({ country: code })} />
         <div className="help">
-          Non-UK residents will undergo enhanced due diligence as part of GoIdentity verification.
+          Country-specific due diligence is not evaluated by this preview.
         </div>
       </div>
 
@@ -1413,7 +1384,7 @@ function StepKyc({ form, set }) {
           fontSize: 12.5, lineHeight: 1.55,
         }}>
           <strong style={{ color: "var(--warn)", display: "block", marginBottom: 2 }}>Manual review required</strong>
-          Applications from {countryName(form.country)} are routed to our Chief Risk Officer for review before the GoIdentity link is issued. Expect a 48-72 hour additional review window plus enhanced source-of-funds evidence requests.
+          This preview does not submit applications or route cases for compliance review.
         </div>
       )}
 
@@ -1556,7 +1527,7 @@ function StepKyc({ form, set }) {
           <option value="other">Other (we'll ask for detail)</option>
         </select>
         <div className="help">
-          Supporting evidence (bank statements, sale proceeds, solicitor confirmation) is requested during GoIdentity verification.
+          This preview does not request, upload or store supporting documents.
         </div>
       </div>
     </>
@@ -1610,7 +1581,7 @@ function StepTwoFA({ form, set }) {
         <div style={{ display: "flex", alignItems: "center", gap: 8, fontWeight: 600, marginBottom: 4 }}>
           <I.lock /> Two-factor authentication
         </div>
-        2FA is required on every CredX sign-in. Pick an authenticator app for the strongest security, or use SMS if you'd prefer.
+        MFA enrollment is not connected. The authenticator and SMS options below are visual examples only.
       </div>
 
       <div>
@@ -1676,7 +1647,7 @@ function StepTwoFA({ form, set }) {
                    value={form.twoFAPhone || fullPhone(form.phoneCountry, form.phoneNumber)}
                    onChange={e => set({ twoFAPhone: e.target.value })}
                    placeholder="+44 7700 900000" />
-            <div className="help">We'll text a 6-digit code to this number every time you sign in.</div>
+            <div className="help">No SMS message will be sent in this preview.</div>
           </div>
           <div style={{
             padding: "10px 14px",
@@ -1685,8 +1656,7 @@ function StepTwoFA({ form, set }) {
             fontSize: 12, color: "var(--ink-3)",
             display: "flex", justifyContent: "space-between", alignItems: "center",
           }}>
-            <span>Demo: a verification code has been sent to <strong className="mono" style={{ color: "var(--ink-2)" }}>{phoneForCode || "your number"}</strong></span>
-            <button type="button" className="btn btn-sm">Resend</button>
+            <span>No verification code was sent.</span>
           </div>
         </>
       )}
@@ -1700,9 +1670,7 @@ function StepTwoFA({ form, set }) {
                className="mono"
                style={{ fontSize: 22, letterSpacing: "0.4em", textAlign: "center" }} />
         <div className="help">
-          {form.twoFAMethod === "authenticator"
-            ? "Open the authenticator app and enter the current 6-digit code for CredX."
-            : "Enter the code we just sent by SMS. Any 6 digits work in the demo."}
+          The six-digit value is only a form check; the API does not verify it or enable MFA.
         </div>
       </div>
     </>
@@ -1710,12 +1678,7 @@ function StepTwoFA({ form, set }) {
 }
 
 // ── STEP 6 · SUBMITTED ──────────────────────────────────────────
-function StepSubmitted({ form, onSignIn }) {
-  // Confirmation-email metadata - what would normally arrive in the
-  // investor's inbox a few seconds after account creation.
-  const ts = new Date();
-  const tsStr = ts.toLocaleString("en-GB", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
-  const ip   = "82.5." + Math.floor(Math.random() * 254) + "." + Math.floor(Math.random() * 254);
+function StepSubmitted({ switchToSignin }) {
   return (
     <div style={{ paddingTop: 4 }}>
       <div style={{
@@ -1727,10 +1690,8 @@ function StepSubmitted({ form, onSignIn }) {
         <I.check style={{ width: 24, height: 24 }} />
       </div>
       <p style={{ fontSize: 14, color: "var(--ink-2)", lineHeight: 1.6, margin: "0 0 18px", maxWidth: "44ch" }}>
-        Your application has been received. The CredX team will be in touch within <strong style={{ color: "var(--ink)" }}>24-48 hours</strong> to schedule your initial onboarding conversation.
+        This is the end of the onboarding preview. No application was submitted and no investor account was created.
       </p>
-
-      {/* Confirmation email notice */}
       <div style={{
         padding: "12px 14px",
         background: "var(--bg-sunk)",
@@ -1739,60 +1700,17 @@ function StepSubmitted({ form, onSignIn }) {
         marginBottom: 18,
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, fontWeight: 600, marginBottom: 6, color: "var(--ink)" }}>
-          <I.bell style={{ width: 14, height: 14 }} /> Confirmation email sent
+          <I.lock style={{ width: 14, height: 14 }} /> No data was sent
         </div>
-        We've sent a confirmation to <strong className="mono">{form.email || "your address"}</strong> noting your account was created at
-        {" "}<strong className="mono" style={{ color: "var(--ink)" }}>{tsStr}</strong> from IP{" "}
-        <strong className="mono" style={{ color: "var(--ink)" }}>{ip}</strong>.
-        If this wasn't you, use the <a href="#" onClick={e => e.preventDefault()} style={{ color: "var(--neg)", fontWeight: 600 }}>"This wasn't me"</a> link in the email to secure your account immediately.
+        Your entries were held only in this page's memory and were not sent to an API or stored in browser storage.
       </div>
-
-      <div style={{ display: "flex", flexDirection: "column", gap: 0, border: "1px solid var(--border)", marginBottom: 20 }}>
-        {[
-          ["GoIdentity invite",     "An SMS link will arrive at " + (fullPhone(form.phoneCountry, form.phoneNumber) || "your mobile") + " from GoIdentity. Scan your passport or driving licence on your phone - verification typically completes in under three minutes."],
-          ["Investor profile call", "A 30-minute call with your CredX contact to walk through pipeline, deal structures and confirm your funding criteria."],
-          ["First deal pack",       "Once verified, you'll receive your first opportunity matching the criteria you set out (capital range, target return, term)."],
-          ["Facility Agreement",    "JMW drafts a bespoke Facility Agreement for each deployment you fund - issued for review and e-signature."],
-        ].map(([t, d], i, a) => (
-          <div key={t} style={{
-            display: "grid", gridTemplateColumns: "32px 1fr", gap: 14,
-            padding: "14px 16px",
-            borderBottom: i < a.length - 1 ? "1px solid var(--border)" : "0",
-            alignItems: "flex-start",
-          }}>
-            <span className="mono" style={{
-              fontSize: 11, fontWeight: 600, color: "var(--accent-ink)",
-              background: "var(--accent-tint)",
-              width: 26, height: 26,
-              display: "inline-flex", alignItems: "center", justifyContent: "center",
-            }}>0{i + 1}</span>
-            <div>
-              <div style={{ fontSize: 13.5, fontWeight: 600 }}>{t}</div>
-              <div style={{ fontSize: 12.5, color: "var(--ink-2)", marginTop: 3, lineHeight: 1.5 }}>{d}</div>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <div style={{
-        padding: "10px 14px",
-        background: "var(--bg-sunk)",
-        border: "1px solid var(--border)",
-        marginBottom: 16,
-        fontSize: 12, color: "var(--ink-3)",
-      }}>
-        Reference: <span className="mono" style={{ color: "var(--ink)", fontWeight: 600 }}>
-          CX-SU-{new Date().getFullYear()}-{Math.floor(Math.random() * 9000 + 1000)}
-        </span>
-      </div>
-
       <button type="button" className="btn btn-primary btn-lg"
               style={{ width: "100%", justifyContent: "center" }}
-              onClick={() => onSignIn(form.email || "demo@credx.co.uk")}>
-        Preview your portal <I.arrowRight />
+              onClick={switchToSignin}>
+        Return to sign in <I.arrowRight />
       </button>
       <div style={{ fontSize: 11.5, color: "var(--ink-3)", textAlign: "center", marginTop: 10, lineHeight: 1.5 }}>
-        Demo: your portal is unlocked immediately so you can explore. In production, access opens after GoIdentity verification.
+        Your entries were only held temporarily in this page and were not submitted.
       </div>
     </div>
   );

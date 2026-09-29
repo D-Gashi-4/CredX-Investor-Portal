@@ -1,14 +1,35 @@
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
+import rateLimit from 'express-rate-limit';
 import { createSession, deleteSession, findSession, getDatabase, verifyPassword } from './db.js';
+
+const isProduction = process.env.NODE_ENV === 'production';
+if (isProduction) {
+  throw new Error('Production startup is disabled until investor registration, email verification, MFA and KYC are implemented.');
+}
 
 const app = express();
 const db = getDatabase();
 const port = Number(process.env.PORT || 4000);
+const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:5173,http://localhost:5174')
+  .split(',')
+  .map(origin => origin.trim())
+  .filter(Boolean);
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 10,
+  standardHeaders: 'draft-8',
+  legacyHeaders: false,
+  message: { error: 'Too many sign-in attempts. Try again later.' },
+});
 
-app.use(cors({ origin: process.env.CORS_ORIGIN || true }));
-app.use(express.json());
+app.use(cors({
+  origin(origin, callback) {
+    callback(null, !origin || allowedOrigins.includes(origin));
+  },
+}));
+app.use(express.json({ limit: '32kb' }));
 
 function requireRole(...roles) {
   return (req, res, next) => {
@@ -30,7 +51,7 @@ function requireAuth(req, res, next) {
 
 app.get('/health', (_req, res) => res.json({ ok: true, service: 'credx-api' }));
 
-app.post('/api/auth/login', (req, res) => {
+app.post('/api/auth/login', authLimiter, (req, res) => {
   const email = String(req.body?.email || '').trim().toLowerCase();
   const password = String(req.body?.password || '');
   const user = db.prepare(`SELECT users.*, investors.id AS investor_id, investors.reference, investors.classification FROM users LEFT JOIN investors ON investors.user_id = users.id WHERE lower(users.email) = ? LIMIT 1`).get(email);
