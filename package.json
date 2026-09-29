@@ -1,11 +1,12 @@
 {
   "name": "credx-platform",
   "private": true,
-  "workspaces": ["apps/api", "apps/investor"],
+  "workspaces": ["apps/api", "apps/investor", "apps/admin"],
   "scripts": {
     "api:dev": "npm.cmd --workspace @credx/api run dev",
     "api:start": "npm.cmd --workspace @credx/api run start",
     "investor:dev": "npm.cmd --workspace @credx/investor-portal run dev",
+    "admin:dev": "npm.cmd --workspace @credx/admin-portal run dev",
     "db:seed": "npm.cmd --workspace @credx/api run db:seed"
   }
 }

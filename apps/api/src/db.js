@@ -111,6 +111,9 @@ export function deleteSession(token) {
 const seedUser = db.prepare(`INSERT OR IGNORE INTO users (id, email, display_name, role) VALUES (1, ?, ?, ?)`);
 seedUser.run('d.gashi@example.co.uk', 'Dorant Gashi', 'INVESTOR');
 db.prepare(`UPDATE users SET password_hash = COALESCE(password_hash, ?) WHERE id = 1`).run(hashPassword('CredX2026!'));
+const seedAdmin = db.prepare(`INSERT OR IGNORE INTO users (id, email, display_name, role) VALUES (2, ?, ?, ?)`);
+seedAdmin.run('admin@credx.co.uk', 'CredX Admin', 'ADMIN');
+db.prepare(`UPDATE users SET password_hash = COALESCE(password_hash, ?) WHERE id = 2`).run(hashPassword('CredXAdmin2026!'));
 const seedInvestor = db.prepare(`INSERT OR IGNORE INTO investors (id, user_id, reference, classification) VALUES (1, 1, ?, ?)`);
 seedInvestor.run('CX-INV-0421', 'Self-certified sophisticated investor');
 
