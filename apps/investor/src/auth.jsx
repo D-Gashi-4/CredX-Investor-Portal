@@ -4,6 +4,14 @@
 const AUTH_KEY = "credx-auth-session-v2";
 const LAST_ACTIVITY_KEY = "credx-last-activity-v1";
 const IDLE_TIMEOUT_MS = 20 * 60 * 1000;
+const API_BASE_URL = () => window.CREDX_API_URL || "http://localhost:4000";
+
+function authErrorMessage(error) {
+  if (error instanceof TypeError && /fetch/i.test(error.message)) {
+    return `Cannot reach the CredX API at ${API_BASE_URL()}. Start the API with node apps/api/src/server.js, then retry.`;
+  }
+  return error.message || "Unable to sign in.";
+}
 
 // ────────────────────────────────────────────────────────────────
 // Country list + sanctions config
@@ -271,7 +279,7 @@ function useAuth() {
     };
   }, [session]);
   const signIn = async (email, password) => {
-    const response = await fetch(`${window.CREDX_API_URL || "http://localhost:4000"}/api/auth/login`, {
+    const response = await fetch(`${API_BASE_URL()}/api/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),
@@ -290,7 +298,7 @@ function useAuth() {
   };
   const signOut = () => {
     if (session?.token) {
-      fetch(`${window.CREDX_API_URL || "http://localhost:4000"}/api/auth/logout`, {
+      fetch(`${API_BASE_URL()}/api/auth/logout`, {
         method: "POST",
         headers: { Authorization: `Bearer ${session.token}` },
       }).catch(() => {});
@@ -442,13 +450,21 @@ function SignInFlow({ onSignIn, switchToSignup }) {
   const [err, setErr] = React.useState("");
   const [busy, setBusy] = React.useState(false);
 
-  const submitCreds = (e) => {
+  const submitCreds = async (e) => {
     e.preventDefault();
     setErr("");
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setErr("Enter a valid email address."); return; }
     if (!password)                                   { setErr("Password is required."); return; }
     setBusy(true);
-    setTimeout(() => { setBusy(false); setStep("twofa"); }, 450);
+    try {
+      const response = await fetch(`${API_BASE_URL()}/health`);
+      if (!response.ok) throw new Error(`The CredX API returned ${response.status}.`);
+      setStep("twofa");
+    } catch (error) {
+      setErr(authErrorMessage(error));
+    } finally {
+      setBusy(false);
+    }
   };
 
   const submitTwoFA = async (e) => {
@@ -459,7 +475,7 @@ function SignInFlow({ onSignIn, switchToSignup }) {
     try {
       await onSignIn(email, password);
     } catch (error) {
-      setErr(error.message || "Unable to sign in.");
+      setErr(authErrorMessage(error));
       setBusy(false);
     }
   };
