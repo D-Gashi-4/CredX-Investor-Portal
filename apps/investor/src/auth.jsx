@@ -280,18 +280,8 @@ function useAuth() {
       window.clearInterval(timer);
     };
   }, [session]);
-  const signIn = async (email, password = DEMO_PASSWORD) => {
-    const response = await fetch(`${window.CREDX_API_URL || "http://localhost:4000"}/api/auth/login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    });
-    if (!response.ok) {
-      const body = await response.json().catch(() => ({}));
-      throw new Error(body.error || "Unable to sign in");
-    }
-    const result = await response.json();
-    const next = { ...result.user, token: result.token, signedInAt: new Date().toISOString() };
+  const signIn = (email) => {
+    const next = { email, signedInAt: new Date().toISOString() };
     try {
       sessionStorage.setItem(AUTH_KEY, JSON.stringify(next));
       sessionStorage.setItem(LAST_ACTIVITY_KEY, String(Date.now()));
@@ -299,12 +289,6 @@ function useAuth() {
     setSession(next);
   };
   const signOut = () => {
-    if (session?.token) {
-      fetch(`${window.CREDX_API_URL || "http://localhost:4000"}/api/auth/logout`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${session.token}` },
-      }).catch(() => {});
-    }
     try {
       sessionStorage.removeItem(AUTH_KEY);
       sessionStorage.removeItem(LAST_ACTIVITY_KEY);
@@ -460,21 +444,17 @@ function SignInFlow({ onSignIn, switchToSignup }) {
     setErr("");
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setErr("Enter a valid email address."); return; }
     if (!password)                                   { setErr("Password is required."); return; }
+    if (password !== DEMO_PASSWORD)                  { setErr("Incorrect password."); return; }
     setBusy(true);
     setTimeout(() => { setBusy(false); setStep("twofa"); }, 450);
   };
 
-  const submitTwoFA = async (e) => {
+  const submitTwoFA = (e) => {
     e.preventDefault();
     setErr("");
     if (!/^\d{6}$/.test(code)) { setErr("Enter the 6-digit code from your authenticator app."); return; }
     setBusy(true);
-    try {
-      await onSignIn(email, password);
-    } catch (error) {
-      setErr(error.message || "Unable to sign in.");
-      setBusy(false);
-    }
+    setTimeout(() => { setBusy(false); onSignIn(email); }, 380);
   };
 
   return (
