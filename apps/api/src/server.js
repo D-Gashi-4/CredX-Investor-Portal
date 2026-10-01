@@ -30,6 +30,12 @@ function requireAuth(req, res, next) {
 
 app.get('/health', (_req, res) => res.json({ ok: true, service: 'credx-api' }));
 
+app.get('/api/demo-credentials', (_req, res) => {
+  if (process.env.NODE_ENV === 'production') return res.status(404).end();
+  res.setHeader('Cache-Control', 'no-store');
+  res.json({ email: 'admin@credx.co.uk', password: 'CredXAdmin2026!' });
+});
+
 app.post('/api/auth/login', (req, res) => {
   const email = String(req.body?.email || '').trim().toLowerCase();
   const password = String(req.body?.password || '');

@@ -3,6 +3,25 @@ const status = document.querySelector('#login-status');
 const submit = form.querySelector('button[type="submit"]');
 const query = new URLSearchParams(window.location.search);
 const apiUrl = window.CredXAdminAuth.apiBase();
+const demoCredentials = document.querySelector('#demo-credentials');
+
+async function showLocalDemoCredentials() {
+  if (!apiUrl || !['localhost', '127.0.0.1'].includes(window.location.hostname)) return;
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), 2000);
+  try {
+    const response = await fetch(`${apiUrl}/api/demo-credentials`, { signal: controller.signal });
+    if (!response.ok) return;
+    const credentials = await response.json();
+    document.querySelector('#demo-email').textContent = credentials.email;
+    document.querySelector('#demo-password').textContent = credentials.password;
+    demoCredentials.hidden = false;
+  } catch {} finally {
+    window.clearTimeout(timeout);
+  }
+}
+
+showLocalDemoCredentials();
 
 if (query.get('reason') === 'session') {
   status.textContent = 'Your admin session ended. Sign in to continue.';
