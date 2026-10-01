@@ -6,7 +6,7 @@ const apiUrl = window.CredXAdminAuth.apiBase();
 const demoCredentials = document.querySelector('#demo-credentials');
 
 async function showLocalDemoCredentials() {
-  if (!apiUrl || !['localhost', '127.0.0.1'].includes(window.location.hostname)) return;
+  if (!apiUrl || !window.CredXAdminAuth.isLocalDemo()) return;
   const controller = new AbortController();
   const timeout = window.setTimeout(() => controller.abort(), 2000);
   try {

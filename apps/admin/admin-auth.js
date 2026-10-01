@@ -3,11 +3,17 @@
   const TIMEOUT_MS = 7000;
   const roles = ['ADMIN', 'STAFF'];
 
+  function isLocalDemo() {
+    const hostname = window.location.hostname;
+    return ['localhost', '127.0.0.1'].includes(hostname) || hostname.endsWith('.localhost');
+  }
+
   function apiBase() {
     const configured = window.CREDX_API_URL?.trim();
     if (configured) return configured.replace(/\/+$/, '');
-    if (['localhost', '127.0.0.1'].includes(window.location.hostname)) {
-      return `${window.location.protocol}//${window.location.hostname}:4000`;
+    if (isLocalDemo()) {
+      const apiHost = window.location.hostname.endsWith('.localhost') ? 'localhost' : window.location.hostname;
+      return `${window.location.protocol}//${apiHost}:4000`;
     }
     return null;
   }
@@ -83,5 +89,5 @@
     window.location.assign('/login.html');
   }
 
-  window.CredXAdminAuth = { apiBase, signIn, verifySession, signOut };
+  window.CredXAdminAuth = { apiBase, isLocalDemo, signIn, verifySession, signOut };
 })();
